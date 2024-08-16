@@ -19,7 +19,10 @@ genGrowTree(
 }
 \arguments{
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
-vertices with in-degree 1 and out-degree 0.}
+vertices with in-degree 1 and out-degree 0.\cr
+Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+the number of leaves must be at least 2 since there must be at
+least one edge.}
 
 \item{STARTING_RATE}{Positive numeric value (default = 1) which specifies the
 initial rate at which the speciation events occur (has only influence on the
@@ -178,10 +181,7 @@ specify a (new) model by defining how the rates (and optionally traits)
 change in every time step (see parameters \code{childRates} and
 \code{otherRates} as well as \code{childTraits} and
 \code{otherTraits}; see also Table 5 of the supplementary material of
-the corresponding manuscript). \cr
-Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-the number of leaves must be at least 2 since there must be at
-least one edge.
+the corresponding manuscript).
 }
 \examples{
 genGrowTree(n = 5, use_built_in = "IF_sym", ZETA = 2)
@@ -202,7 +202,4 @@ tree balance indices (Master’s thesis, University of Greifswald), 2020.
 \item M. Kirkpatrick and M. Slatkin. Searching for evolutionary patterns in the
 shape of a phylogenetic tree. Evolution, 47(4):1171–1181, 1993.
 }
-}
-\author{
-Sophie Kersting
 }

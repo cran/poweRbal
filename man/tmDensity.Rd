@@ -8,7 +8,10 @@ genDensityTree(n, BIRTHRATE = 1, EQUILIB, TRIES = 5, TIMEperTRY = 0.01)
 }
 \arguments{
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
-vertices with in-degree 1 and out-degree 0.}
+vertices with in-degree 1 and out-degree 0.\cr
+Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+the number of leaves must be at least 2 since there must be at
+least one edge.}
 
 \item{BIRTHRATE}{Positive numeric value (default = 1) which specifies the
 rate at which the speciation events occur.}
@@ -35,10 +38,7 @@ number of species (it increases linearly with the number of co-existing
 lineages until an equilibrium number is reached at which speciation and
 extinction rates are equal).
 Extinct species are removed from the tree, i.e., the generated tree contains
-only species living at the present.\cr
-Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-the number of leaves must be at least 2 since there must be at
-least one edge. \cr
+only species living at the present.
 }
 \examples{
 genDensityTree(n = 5, EQUILIB = 6)
@@ -48,7 +48,4 @@ genDensityTree(n = 5, EQUILIB = 6)
 \item P. H. Harvey, R. M. May, and S. Nee. Phylogenies without fossils.
 Evolution, 48(3):523–529, 1994.
 }
-}
-\author{
-Sophie Kersting
 }

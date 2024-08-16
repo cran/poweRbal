@@ -7,15 +7,13 @@
 #' \code{DEATHRATES} as well as a transition rate to the other state
 #' \code{TRANSRATES}. \cr
 #' Extinct species are removed from the tree, i.e., the generated tree contains
-#' only species living at the present.\cr
-#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-#' the number of leaves must be at least 2 since there must be at
-#' least one edge.
-#'
-#' @author Sophie Kersting
+#' only species living at the present.
 #'
 #' @param n Integer value that specifies the desired number of leaves, i.e.,
-#' vertices with in-degree 1 and out-degree 0.
+#' vertices with in-degree 1 and out-degree 0. \cr
+#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+#' the number of leaves must be at least 2 since there must be at
+#' least one edge.
 #' @param BIRTHRATES Numeric vector (default = c(1,1)) which specifies
 #' the speciation rates in state A and B (vector with 2 values >=0, one
 #' value >0).

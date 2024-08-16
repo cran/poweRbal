@@ -2,38 +2,9 @@
 % Please edit documentation in R/powerShow.R
 \name{showTSSdata}
 \alias{showTSSdata}
-\alias{showPower}
-\alias{showPower_param}
-\title{Functions for displaying TSS distributions and TSS power}
+\title{Function for displaying TSS distributions}
 \usage{
-showTSSdata(
-  tss_data,
-  main = NULL,
-  xlab = NULL,
-  test_type = "two-tailed",
-  sig_lvl = 0.05,
-  ...
-)
-
-showPower(
-  power_data,
-  tss_names = NULL,
-  tss_colors = NULL,
-  model_names = NULL,
-  sig_lvl = 0.05,
-  ...
-)
-
-showPower_param(
-  power_data,
-  tss_names = NULL,
-  tss_colors = NULL,
-  tss_ltys = NULL,
-  model_name = NULL,
-  model_param,
-  sig_lvl = 0.05,
-  ...
-)
+showTSSdata(tss_data, main = NULL, xlab = NULL, sig_lvl = 0.05, ...)
 }
 \arguments{
 \item{tss_data}{Numeric matrix of TSS values (one row per TSS). The row names
@@ -44,106 +15,19 @@ are used as names for the TSS.}
 \item{xlab}{Label of x-axis (default = NULL). A generic label is created
 by default.}
 
-\item{test_type}{Determines the method. Available are: \cr
-\itemize{
-\item "two-tailed" (default)
-}}
-
-\item{sig_lvl}{Level of significance (default=0.05, must be >0 and <1). NO
-horizontal line is depicted if set to NULL.}
+\item{sig_lvl}{Level of significance (default=0.05, must be >0 and <1).}
 
 \item{...}{Add further specifications for \code{plot()}.}
-
-\item{power_data}{Numeric matrix, one row per TSS and one column per
-alternative model.}
-
-\item{tss_names}{Vector of characters/expression of the TSS names (default
-= NULL). If none are provided, the row names of \code{power_data} are used
-as names for the TSS.}
-
-\item{tss_colors}{Vector of colors for the TSS (default = NULL).}
-
-\item{model_names}{Vector of characters/expression of the model names
-(default = NULL). If none are provided, the column names of \code{power_data}
-are used as names for the models.}
-
-\item{tss_ltys}{Vector of line types for the TSS (default = NULL).}
-
-\item{model_name}{Vector of characters/expressions of the name of the tree
-model family and of the parameter (default = NULL), e.g.
-\code{c("Aldous\'", expression(beta))}.
-If none are provided, the first column name of \code{power_data} is used.}
-
-\item{model_param}{Numeric vector containing the parameter values of the
-representatives of the tree model.}
 }
 \value{
 \code{showTSSdata} No return value, called for side effects
 (plotting).
-
-\code{showPower} No return value, called for side effects
-(plotting).
-
-\code{showPower_param} No return value, called for side effects
-(plotting).
 }
 \description{
 \code{showTSSdata} - This function plots histograms of TSS data.
-
-\code{showPower} - This function displays the power of TSS under
-different alternative models.
-
-\code{showPower_param} - This function displays the power of TSS under
-different representatives of a family of tree models which vary only in one
-parameter.
 }
 \examples{
 showTSSdata(tss_data = getTSSdata_trees(tss = c("Colless", "Sackin"),
                 treeList = lapply(1:20L, function(x) genYuleTree(10))),
                 breaks=15)
-# With error bars:
-showPower(power_data = powerComp(tss = c("Sackin", "Colless", "B1I"),
-                                     alt_models = list("pda", "etm"), n=10L,
-                                     sample_size = 50L,
-                                     with_CIradius = TRUE),
-              tss_names = getTSSnames(c("Sackin", "Colless", "B1I")),
-              tss_colors = getTSScolors(c("Sackin", "Colless", "B1I")),
-              model_names = c("PDA", "ETM"),
-              main = "Power (Yule as null model, n = 10, N=50)",
-              ylim = c(0,1), ylab = "Power (null model rejected)")
-# Without error bars:
-showPower(power_data = powerComp(tss = c("Sackin", "Colless", "B1I"),
-                                     alt_models = list("pda", "etm"), n=10L,
-                                     sample_size = 50L),
-              tss_names = getTSSnames(c("Sackin", "Colless", "B1I")),
-              tss_colors = getTSScolors(c("Sackin", "Colless", "B1I")),
-              model_names = c("PDA", "ETM"),
-              main = "Power (Yule as null model, n = 10, N=50)",
-              ylim = c(0,1), ylab = "Power (null model rejected)")
-# With confidence bands:
-showPower_param(power_data = powerComp(tss = c("Sackin", "Colless", "B1I"),
-                                   alt_models = list(list("aldous", 0.5),
-                                   list("aldous", 0),list("aldous", -0.5),
-                                   list("aldous", -1),list("aldous", -1.5)),
-                                   n=20L, sample_size = 50L,
-                                   with_CIradius = TRUE),
-              tss_names = getTSSnames(c("Sackin", "Colless", "B1I")),
-              tss_colors = getTSScolors(c("Sackin", "Colless", "B1I")),
-              model_name = c("Aldous-beta splitting model", "beta"),
-              model_param = c(0.5,0,-0.5,-1,-1.5),
-              ylim = c(0,1), ylab = "Power (null model rejected)")
-# Without confidence bands:
-showPower_param(power_data = powerComp(tss = c("Sackin", "Colless", "B1I"),
-                                   alt_models = list(list("aldous", 0.5),
-                                   list("aldous", 0),list("aldous", -0.5),
-                                   list("aldous", -1),list("aldous", -1.5)),
-                                   n=20L, sample_size = 50L),
-              tss_names = getTSSnames(c("Sackin", "Colless", "B1I")),
-              tss_colors = getTSScolors(c("Sackin", "Colless", "B1I")),
-              model_name = c("Aldous-beta splitting model", "beta"),
-              model_param = c(0.5,0,-0.5,-1,-1.5),
-              ylim = c(0,1), ylab = "Power (null model rejected)")
-}
-\author{
-Sophie Kersting
 }

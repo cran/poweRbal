@@ -8,7 +8,10 @@ genCombTree(n)
 }
 \arguments{
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
-vertices with in-degree 1 and out-degree 0.}
+vertices with in-degree 1 and out-degree 0.\cr
+Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+the number of leaves must be at least 2 since there must be at
+least one edge.}
 }
 \value{
 \code{genCombTree} A single tree of class \code{phylo} is returned.
@@ -16,10 +19,7 @@ vertices with in-degree 1 and out-degree 0.}
 \description{
 \code{genCombTree} - Generates the rooted binary comb tree (also known as
 caterpillar tree) in \code{phylo} format with the given number of \code{n}
-leaves. \cr
-Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-the number of leaves must be at least 2 since there must be at
-least one edge.
+leaves.
 }
 \examples{
 genCombTree(n = 6)
@@ -29,7 +29,4 @@ genCombTree(n = 6)
 \item D. Aldous. Probability Distributions on Cladograms. In Random Discrete
 Structures, pages 1–18. Springer New York, 1996.
 }
-}
-\author{
-Sophie Kersting
 }

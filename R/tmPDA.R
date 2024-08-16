@@ -4,15 +4,13 @@
 #' format with the given number of \code{n} leaves under the
 #' proportional-to-distinguishable-arrangements model.
 #' Given \code{n}, all phylogenies (trees with labeled leaves) with
-#' \code{n} leaves are equiprobable under the PDA.\cr
-#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-#' the number of leaves must be at least 2 since there must be at
-#' least one edge.
-#'
-#' @author Sophie Kersting
+#' \code{n} leaves are equiprobable under the PDA.
 #'
 #' @param n Integer value that specifies the desired number of leaves, i.e.,
-#' vertices with in-degree 1 and out-degree 0.
+#' vertices with in-degree 1 and out-degree 0.\cr
+#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+#' the number of leaves must be at least 2 since there must be at
+#' least one edge.
 #'
 #' @return \code{genPDATree} A single tree of class \code{phylo} is returned.
 #'

@@ -15,7 +15,10 @@ genBiSSETree(
 }
 \arguments{
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
-vertices with in-degree 1 and out-degree 0.}
+vertices with in-degree 1 and out-degree 0. \cr
+Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+the number of leaves must be at least 2 since there must be at
+least one edge.}
 
 \item{BIRTHRATES}{Numeric vector (default = c(1,1)) which specifies
 the speciation rates in state A and B (vector with 2 values >=0, one
@@ -45,10 +48,7 @@ the state a speciation rate \code{BIRTHRATES}, an extinction rate
 \code{DEATHRATES} as well as a transition rate to the other state
 \code{TRANSRATES}. \cr
 Extinct species are removed from the tree, i.e., the generated tree contains
-only species living at the present.\cr
-Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-the number of leaves must be at least 2 since there must be at
-least one edge.
+only species living at the present.
 }
 \examples{
 if (requireNamespace("diversitree", quietly = TRUE)) {
@@ -67,7 +67,4 @@ Evolution, 3(6):1084-1092, 2012). \cr
 character’s effect on speciation and extinction. Systematic Biology,
 56(5):701–710, 2007.
 }
-}
-\author{
-Sophie Kersting
 }

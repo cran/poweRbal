@@ -3,8 +3,6 @@
 #' \code{getTSSdata} - Compute the tree shape statistics of trees generated
 #' under a tree model for each given TSS.
 #'
-#' @author Sophie Kersting
-#'
 #' @param tss Vector containing the names (as character) of the tree shape
 #' statistics that should be compared. You may either use the short names
 #' provided in \code{tssInfo} to use the already included TSS, or use the
@@ -36,16 +34,17 @@
 #' @rdname powerData
 #'
 #' @examples
-#' # Example using tree models included in this package.
+#' # Example using tree models and TSS included in this package:
 #' getTSSdata(tss = c("Colless", "Sackin"), n = 5L, Ntrees = 3L,
-#'            tm = "yule")
-#' # Example using a "new" TM provided by the user.
+#'            tm = list("aldous", -1))
+#' # Example using a "new" tree model and a "new" TSS provided by the user:
 #' my_aldous <- list(func = function(n, Ntrees){
 #'                         trees <- lapply(1:Ntrees,
 #'                            function(x){genAldousBetaTree(n = n, BETA =5L)})
 #'                         attr(trees, "class") <- "multiPhylo"
 #'                         return(trees)})
-#' getTSSdata(tss = c("Colless", "Sackin"), n = 5L, Ntrees = 3L,
+#' my_avd <- list(func = treebalance::avgVertDep, short = "My AVD")
+#' getTSSdata(tss = c("Colless", "my_avd"), n = 5L, Ntrees = 3L,
 #'            tm = "my_aldous")
 getTSSdata <- function(tss, n, Ntrees = 1L, tm) {
   # Create the list of trees under the model
@@ -98,11 +97,12 @@ getTSSdata <- function(tss, n, Ntrees = 1L, tm) {
 #' @examples
 #' # Example using TSS provided in tssInfo.
 #' getTSSdata_trees(tss = c("Colless", "Sackin"),
-#'            treeList = lapply(1:6L, function(x) genYuleTree(5)))
+#'            treeList = genTrees(n = 5L, Ntrees = 3L, tm = "yule"))
 #' # Example using a "new" TSS provided by the user.
 #' my_avd <- list(func = treebalance::avgVertDep, short = "My AVD")
 #' getTSSdata_trees(tss = c("Colless", "my_avd"),
-#'            treeList = lapply(1:6L, function(x) genYuleTree(5)))
+#'            treeList = genTrees(n = 5L, Ntrees = 3L,
+#'                                tm = list("IF_sym", 2)))
 getTSSdata_trees <- function(tss, treeList) {
   if(is.null(treeList) || length(treeList) == 0){
     return(NULL)

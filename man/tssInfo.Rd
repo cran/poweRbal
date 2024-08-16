@@ -47,7 +47,4 @@ Tree Balance Indices - A Comprehensive Survey. Springer, 2023.
 ISBN: 978-3-031-39799-8
 }
 }
-\author{
-Sophie Kersting
-}
 \keyword{datasets}

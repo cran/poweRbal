@@ -3,8 +3,6 @@
 #' \code{getTSSnames} - Returns the full names (character/expression) of the
 #' TSS.
 #'
-#' @author Sophie Kersting
-#'
 #' @param tss_shorts Vector of short names (characters) of TSS contained in
 #' \code{tssInfo}.
 #'
@@ -81,7 +79,8 @@ getTSSsafe_n <- function(tss_shorts){
 }
 #' Get information on included tree shape statistics
 #'
-#' \code{getTSStype} - Returns the ranges of n that can be safely used.
+#' \code{getTSStype} - Returns the types of the TSS, i.e., whether they are
+#' balance or imbalance indices, or simple tree shape statistics.
 #'
 #' @return \code{getTSStype} Vector of characters (types as factors).
 #'

@@ -2,20 +2,54 @@
 % Please edit documentation in R/powerRegAcc.R
 \name{getAccRegion}
 \alias{getAccRegion}
-\alias{getAccRegion_data}
+\alias{getAccRegion_sampled}
+\alias{getAccRegion_exact}
+\alias{computeAccRegion}
 \title{Functions for computing the region of acceptance}
 \usage{
 getAccRegion(
   tss,
   null_model = "yule",
   n,
-  distribs = "sampled",
-  sample_size = 1000L,
+  distribs = "exact_if_possible",
+  N_null = 10000L,
+  N_alt = 1000L,
+  N_intervals = 1000L,
   test_type = "two-tailed",
+  correction = "small-sample",
   sig_lvl = 0.05
 )
 
-getAccRegion_data(tss_data, test_type = "two-tailed", sig_lvl = 0.05)
+getAccRegion_sampled(
+  tss,
+  null_model = "yule",
+  n,
+  N_null,
+  N_alt = 1000L,
+  N_intervals = 1000L,
+  test_type = "two-tailed",
+  correction = "small-sample",
+  sig_lvl = 0.05
+)
+
+getAccRegion_exact(
+  tss,
+  null_model = "yule",
+  n,
+  N_alt = 1000L,
+  N_intervals = 1000L,
+  test_type = "two-tailed",
+  correction = "small-sample",
+  sig_lvl = 0.05
+)
+
+computeAccRegion(
+  unique_null_vals,
+  unique_null_probs,
+  correction,
+  cutoff_left,
+  cutoff_right
+)
 }
 \arguments{
 \item{tss}{Vector containing the names (as character) of the tree shape
@@ -46,50 +80,137 @@ Use \code{"new_tm"} for the list object
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
 vertices with in-degree 1 and out-degree 0.}
 
-\item{distribs}{Determines how the distributions and quantiles are computed.
-Available are: \cr
+\item{distribs}{Determines how the distributions (and with that the
+bounds of the critical region) are computed. Available are: \cr
 \itemize{
-\item "sampled" (default): \code{sample_size} many trees are sample under the
-respective models to determine the quantiles for the null model and how many
-trees under the alternative models lie outside.
+\item "exact_if_possible" (default): Tries to compute the exact distribution
+under the null model if possible. Currently, this is only implemented for
+\code{null_model = "yule"}, \code{"pda"}, or \code{"etm"}, and
+\code{n}<=20. In all other cases the distribution is approximated
+by sampling \code{N_null} many trees under the null model as in the
+option "sampled" below. \cr
+\item "sampled": \code{N_null} many trees are sampled under the
+null model to approximate the distribution.
 }}
 
-\item{sample_size}{Sample size (integer >=10) if distributions are sampled
-(default= 1000L).}
+\item{N_null}{Sample size (integer >=10) if distributions are sampled
+(default = 10000L).}
+
+\item{N_alt}{Sample size (integer >=10) for the alternative models to
+estimate the power (default = 1000L). Only needed here if the
+\code{test_type} is "two-tailed-unbiased".}
+
+\item{N_intervals}{Number (integer >=3, default = 1000L) of different
+quantile/cut-off pairs investigated as potential bounds of the region of
+acceptance. This parameter is only necessary if the \code{test_type} is
+"two-tailed-unbiased".}
 
 \item{test_type}{Determines the method. Available are: \cr
 \itemize{
-\item "two-tailed" (default)
+\item "two-tailed" (default): The lower and upper bound of the region of
+acceptance are determined based on the (empirical) distribution function
+such that P(TSS < lower bound) <= \code{sig_lvl}/2 and
+P(TSS > upper bound) <= \code{sig_lvl}/2. See parameter \code{correction}
+for specifying how conservative the test should be: the null
+hypothesis can either be rejected only if the values are strictly outside of
+this region of acceptance (can be too conservative) or it can also be
+rejected (with certain probabilities) if the value equals the lower or
+upper bound.\cr
+\item "two-tailed-unbiased": Experimental - Use with caution!\cr
+The region of acceptance is optimized to yield an unbiased test, i.e., a test
+that identifies non-null models with a probability of at least
+\code{sig_lvl}.
+The region of acceptance is determined similar to the default method.
+However, it need not be symmetrical, i.e., not necessarily
+cutting off \code{sig_lvl}/2 on both sides. Also see parameter
+\code{correction} for specifying how conservative the test should be.
+}}
+
+\item{correction}{Specifies the desired correction method.
+Available are: \cr
+\itemize{
+\item "small-sample" (default): This method tries to ensure that the critical
+region, i.e., the range of values for which the null hypothesis is rejected,
+is as close to \code{sig_lvl} as possible (compared with "none" below, which
+can be too conservative). The idea is that the null hypothesis is also
+rejected with certain probabilities if the value matches a bound of the
+region of acceptance. \cr
+\item "none": No correction method is applied. With that the test might be
+slightly too conservative as the null hypothesis is maintained if the values
+are >= the lower and <= the upper bound.
 }}
 
 \item{sig_lvl}{Level of significance (default=0.05, must be >0 and <1).}
 
-\item{tss_data}{Numeric matrix of TSS values (one row per TSS). The row names
-are used as names for the TSS.}
+\item{unique_null_vals}{Numeric vector containing all the unique values under
+the null model.}
+
+\item{unique_null_probs}{Numeric vector containing the corresponding
+probabilities of the unique values under the null model.}
+
+\item{cutoff_left}{Numeric value (>=0, <1) specifying the cut-off of the
+distribution for the lower bound of the region of acceptance. The sum of
+the two cut-offs must be <1.}
+
+\item{cutoff_right}{Numeric value (>=0, <1) specifying the cut-off of the
+distribution for the upper bound of the region of acceptance. The sum of
+the two cut-offs must be <1.}
 }
 \value{
-\code{getAccRegion} Numeric matrix (one row per TSS) with two
-columns for the interval limits of the acceptance region.
+\code{getAccRegion} Numeric matrix (one row per TSS) with four
+columns: The first two columns contain the interval limits of the region
+of acceptance, i.e., we reject the null hypothesis for values strictly
+outside of this interval. The third and fourth columns contain the
+probabilities to reject the null hypothesis if values equal the lower or
+upper bound, respectively.
 
-\code{getAccRegion_data} Numeric matrix (one row per TSS) with two
-columns for the interval limits of the acceptance region.
+\code{getAccRegion_sampled} Numeric matrix (one row per TSS) with
+four columns - similar as \code{getAccRegion}.
+
+\code{getAccRegion_exact} Numeric matrix (one row per TSS) with
+four columns - similar as \code{getAccRegion}.
+
+\code{computeAccRegion} Numeric vector with
+four columns - similar as \code{getAccRegion}.
 }
 \description{
 \code{getAccRegion} - Computes the region of acceptance based on quantiles
-for a specified level of significance and method. The critical region is
-everything strictly outside this interval, i.e., the interval limits still
-belong to the acceptance region.
+for a specified level of significance and method.
 
-\code{getAccRegion_data} - Computes the region of acceptance for the
-given TSS values based on quantiles for a specified level of significance and
-method. The critical region is everything strictly outside this interval,
-i.e., the interval limits still belong to the acceptance region.
+\code{getAccRegion_sampled} - Computes a sampling-based region of acceptance
+for the given null model based on quantiles for a specified level of
+significance and method.
+
+\code{getAccRegion_exact} - Computes the exact region of acceptance for the
+given null model based on quantiles for a specified level of significance
+and method. Currently, this is only implemented for
+\code{null_model = "yule"} or \code{"pda"}, and \code{n}<=20.
+
+\code{computeAccRegion} - Computes the bounds of the region of acceptance
+given the empirical distribution function (specified by the unique values
+and their probabilities under the null model) for specified cut-offs
+(e.g., 0.025 on both sides for a symmetric two-tailed test).
+For values strictly outside of the interval the null hypothesis is
+rejected. \cr
+This function also computes the probabilities to
+reject the null hypothesis if the value equals the lower or upper bound of
+the region of acceptance. This probability is 0 for correction method
+"none" and for "small-sample" it ensures that the probability of rejection
+exactly corresponds with the specified cut-offs.
 }
 \examples{
-getAccRegion(tss = c("Sackin", "Colless", "B1I"), n = 8L, sample_size = 100L)
-getAccRegion_data(getTSSdata(tss = c("Colless", "Sackin"), n = 8L,
-                             Ntrees = 20L, tm = "yule"))
-}
-\author{
-Sophie Kersting
+getAccRegion(tss = c("Sackin", "Colless", "B1I"), n = 6L)
+getAccRegion(tss = c("Sackin", "Colless", "B1I"), n = 6L, null_model = "etm",
+             N_null = 20L, correction = "none", distribs = "sampled")
+getAccRegion(tss = c("Sackin", "Colless", "B1I"), n = 6L, N_null = 20L,
+             test_type = "two-tailed-unbiased", N_intervals = 5L,
+             N_alt = 10L)
+getAccRegion_sampled(tss = c("Sackin", "Colless", "B1I"), n = 6L,
+                     N_null = 20L, correction = "none")
+getAccRegion_exact(tss = c("Sackin", "Colless", "B1I"),
+                   null_model = "etm", n = 8L)
+computeAccRegion(unique_null_vals = c(1,2,3,4,5),
+                 unique_null_probs = c(0.1,0.4,0.1,0.2,0.2),
+                 correction = "small-sample",
+                 cutoff_left = 0.15, cutoff_right = 0.15)
 }

@@ -70,7 +70,8 @@ TSS.
 
 \code{getTSSsafe_n} - Returns the ranges of n that can be safely used.
 
-\code{getTSStype} - Returns the ranges of n that can be safely used.
+\code{getTSStype} - Returns the types of the TSS, i.e., whether they are
+balance or imbalance indices, or simple tree shape statistics.
 
 \code{getTSSonly_bin} - Returns TRUE/FALSE vector: TRUE if TSS is only for
 binary trees and FALSE otherwise.
@@ -87,7 +88,4 @@ getTSSsafe_n(tss_shorts = c("Sackin", "Colless", "B1I"))
 getTSStype(tss_shorts = c("Sackin", "Colless", "B1I"))
 getTSSonly_bin(tss_shorts = c("Sackin", "Colless", "B1I"))
 getAllTSS(n = c(3,30))
-}
-\author{
-Sophie Kersting
 }

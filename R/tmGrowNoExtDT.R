@@ -12,15 +12,13 @@
 #' change in every time step (see parameters \code{childRates} and
 #' \code{otherRates} as well as \code{childTraits} and
 #' \code{otherTraits}; see also Table 5 of the supplementary material of
-#' the corresponding manuscript). \cr
-#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-#' the number of leaves must be at least 2 since there must be at
-#' least one edge.
-#'
-#' @author Sophie Kersting
+#' the corresponding manuscript).
 #'
 #' @param n Integer value that specifies the desired number of leaves, i.e.,
-#' vertices with in-degree 1 and out-degree 0.
+#' vertices with in-degree 1 and out-degree 0.\cr
+#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+#' the number of leaves must be at least 2 since there must be at
+#' least one edge.
 #' @param STARTING_RATE Positive numeric value (default = 1) which specifies the
 #' initial rate at which the speciation events occur (has only influence on the
 #' edge length, not on the tree topology).

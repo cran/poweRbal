@@ -8,7 +8,10 @@ genAldousBetaTree(n, BETA)
 }
 \arguments{
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
-vertices with in-degree 1 and out-degree 0.}
+vertices with in-degree 1 and out-degree 0. \cr
+Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+the number of leaves must be at least 2 since there must be at
+least one edge.}
 
 \item{BETA}{Numeric value >=-2 which specifies how the leaf sets
 are partitioned. For certain choices of \code{BETA} the Aldous beta model
@@ -35,10 +38,7 @@ Then, this set is partitioned into two subsets according to a density
 function dependent on the parameter \code{beta}.
 The two resulting subsets contain the leaves of the two maximal pending
 subtrees of the root, respectively. The same procedure is then applied to the
-root's children and their respective subsets, and so forth. \cr
-Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-the number of leaves must be at least 2 since there must be at
-least one edge.
+root's children and their respective subsets, and so forth.
 }
 \examples{
 genAldousBetaTree(n = 5, BETA = 1)
@@ -48,7 +48,4 @@ genAldousBetaTree(n = 5, BETA = 1)
 \item D. Aldous. Probability Distributions on Cladograms. In Random Discrete
 Structures, pages 1–18. Springer New York, 1996.
 }
-}
-\author{
-Sophie Kersting
 }

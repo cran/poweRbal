@@ -8,20 +8,18 @@
 #' Instead, it works as follows: The idea is to start with a cherry and
 #' incrementally increase the size of the tree by adding a new leaf with
 #' a leaf edge to any edge (inner or leaf edge), one at a time.
-#' Given a tree with i leaves, then each of the i-1 innner edges (includes
+#' Given a tree with i leaves, then each of the i-1 inner edges (includes
 #' an additional root edge) is chosen with probability
 #' \code{ALPHA}/(i-\code{ALPHA}).
 #' Each of the i leaf edges is chosen with probability
-#' (1-\code{ALPHA})/(i-\code{ALPHA}). \cr
-#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-#' the number of leaves must be at least 2 since there must be at
-#' least one edge.
-#'
-#' @author Sophie Kersting
+#' (1-\code{ALPHA})/(i-\code{ALPHA}).
 #'
 #' @param n Integer value that specifies the desired number of leaves, i.e.,
-#' vertices with in-degree 1 and out-degree 0.
-#' @param ALPHA Numeric value >=0 and <=1 which specifies the probabilites of
+#' vertices with in-degree 1 and out-degree 0. \cr
+#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+#' the number of leaves must be at least 2 since there must be at
+#' least one edge.
+#' @param ALPHA Numeric value >=0 and <=1 which specifies the probabilities of
 #' picking an inner or a leaf edge. For certain choices of
 #' \code{ALPHA} Ford's alpha model coincides with known models:\cr
 #' - \code{ALPHA} = 0: Yule model \cr

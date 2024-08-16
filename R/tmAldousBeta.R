@@ -11,15 +11,13 @@
 #' function dependent on the parameter \code{beta}.
 #' The two resulting subsets contain the leaves of the two maximal pending
 #' subtrees of the root, respectively. The same procedure is then applied to the
-#' root's children and their respective subsets, and so forth. \cr
-#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-#' the number of leaves must be at least 2 since there must be at
-#' least one edge.
-#'
-#' @author Sophie Kersting
+#' root's children and their respective subsets, and so forth.
 #'
 #' @param n Integer value that specifies the desired number of leaves, i.e.,
-#' vertices with in-degree 1 and out-degree 0.
+#' vertices with in-degree 1 and out-degree 0. \cr
+#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+#' the number of leaves must be at least 2 since there must be at
+#' least one edge.
 #' @param BETA Numeric value >=-2 which specifies how the leaf sets
 #' are partitioned. For certain choices of \code{BETA} the Aldous beta model
 #' coincides with known models:\cr

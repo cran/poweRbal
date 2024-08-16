@@ -8,17 +8,17 @@ genGFBTree(n)
 }
 \arguments{
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
-vertices with in-degree 1 and out-degree 0.}
+vertices with in-degree 1 and out-degree 0.\cr
+Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+the number of leaves must be at least 2 since there must be at
+least one edge.}
 }
 \value{
 \code{genGFBTree} A single tree of class \code{phylo} is returned.
 }
 \description{
 \code{genGFBTree} - Generates the rooted binary greedy from the bottom  tree
-in \code{phylo} format with the given number of \code{n} leaves. \cr
-Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-the number of leaves must be at least 2 since there must be at
-least one edge.
+in \code{phylo} format with the given number of \code{n} leaves.
 }
 \examples{
 genGFBTree(n = 6)
@@ -30,7 +30,4 @@ arXiv:2406.05185, 2024.
 \item S. J. Kersting, K. Wicke, and M. Fischer. Tree balance in phylogenetic
 models: Supplementary material. https://tinyurl.com/278cwdh8, 2024.
 }
-}
-\author{
-Sophie Kersting
 }

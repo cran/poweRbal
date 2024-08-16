@@ -2,6 +2,7 @@
 % Please edit documentation in R/powerCompare.R
 \name{powerComp}
 \alias{powerComp}
+\alias{powerComp_RegAcc}
 \title{Comparison of the power of TSS under different models}
 \usage{
 powerComp(
@@ -9,11 +10,26 @@ powerComp(
   null_model = "yule",
   alt_models,
   n,
-  distribs = "sampled",
-  sample_size = 1000L,
+  distribs = "exact_if_possible",
+  N_null = 10000L,
+  N_alt = 1000L,
   test_type = "two-tailed",
-  sig_lvl = 0.05,
-  with_CIradius = FALSE
+  correction = "small-sample",
+  sig_lvl = 0.05
+)
+
+powerComp_RegAcc(
+  tss,
+  accept_regions,
+  null_model,
+  alt_models,
+  n,
+  distribs = "exact_if_possible",
+  N_null = 10000L,
+  N_alt = 1000L,
+  test_type = "two-tailed",
+  correction = "small-sample",
+  sig_lvl = 0.05
 )
 }
 \arguments{
@@ -50,43 +66,112 @@ single model must be in the format described for \code{null_model}.}
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
 vertices with in-degree 1 and out-degree 0.}
 
-\item{distribs}{Determines how the distributions and quantiles are computed.
-Available are: \cr
+\item{distribs}{Determines how the distributions (and with that the
+bounds of the critical region) are computed. Available are: \cr
 \itemize{
-\item "sampled" (default): \code{sample_size} many trees are sample under the
-respective models to determine the quantiles for the null model and how many
-trees under the alternative models lie outside.
+\item "exact_if_possible" (default): Tries to compute the exact distribution
+under the null model if possible. Currently, this is only implemented for
+\code{null_model = "yule"}, \code{"pda"}, or \code{"etm"}, and
+\code{n}<=20. In all other cases the distribution is approximated
+by sampling \code{N_null} many trees under the null model as in the
+option "sampled" below. \cr
+\item "sampled": \code{N_null} many trees are sampled under the
+null model to approximate the distribution.
 }}
 
-\item{sample_size}{Sample size (integer >=10) if distributions are sampled
-(default= 1000L).}
+\item{N_null}{Sample size (integer >=10) if distributions are sampled
+(default = 10000L).}
+
+\item{N_alt}{Sample size (integer >=10) for the alternative models to
+estimate the power (default = 1000L).}
 
 \item{test_type}{Determines the method. Available are: \cr
 \itemize{
-\item "two-tailed" (default)
+\item "two-tailed" (default): The lower and upper bound of the region of
+acceptance are determined based on the (empirical) distribution function
+such that P(TSS < lower bound) <= \code{sig_lvl}/2 and
+P(TSS > upper bound) <= \code{sig_lvl}/2. See parameter \code{correction}
+for specifying how conservative the test should be: the null
+hypothesis can either be rejected only if the values are strictly outside of
+this region of acceptance (can be too conservative) or it can also be
+rejected (with certain probabilities) if the value equals the lower or
+upper bound.\cr
+\item "two-tailed-unbiased": Experimental - Use with caution!\cr
+The region of acceptance is optimized to yield an unbiased test, i.e., a test
+that identifies non-null models with a probability of at least
+\code{sig_lvl}.
+The region of acceptance is determined similar to the default method.
+However, it need not be symmetrical, i.e., not necessarily
+cutting off \code{sig_lvl}/2 on both sides. Also see parameter
+\code{correction} for specifying how conservative the test should be.
 }}
 
-\item{sig_lvl}{Level of significance (default=0.05, must be >0 and <1).}
+\item{correction}{Specifies the desired correction method.
+Available are: \cr
+\itemize{
+\item "small-sample" (default): This method tries to ensure that the critical
+region, i.e. the range of values for which the null hypothesis is rejected,
+is as close to \code{sig_lvl} as possible (compared with "none" below, which
+can be too conservative). The idea is that the null hypothesis is also
+rejected with certain probabilities if the value matches the value of a
+quantile. \cr
+\item "none": No correction method is applied. With that the test might be
+slightly too conservative as the null hypothesis is maintained if the values
+is >= the lower and <= the upper quantile.
+}}
 
-\item{with_CIradius}{Determines if the radii for the 95\%-confidence
-intervals of the power values should also be computed
-and returned (default = FALSE).}
+\item{sig_lvl}{Level of significance (default = 0.05, must be >0 and <1).}
+
+\item{accept_regions}{Numeric matrix (one row per TSS) with two or four
+columns: The first two columns contain the interval limits of the region
+of acceptance, i.e., we reject the null hypothesis for values strictly
+outside of this interval. The third and fourth columns contain the
+probabilities to reject the null hypothesis if values equal the lower or
+upper bound, respectively. If the last two columns are missing they are
+interpreted as zeroes. See return value of \code{getAccRegion()}.}
 }
 \value{
-\code{powerComp}  Numeric matrix, one row per TSS and one
-column per alternative model if \code{with_CIradius} is FALSE (default).
-Else a list with two such numeric matrices, the first for the power and the
-second for the confidence interval radius.
+\code{powerComp}  Returns an object of class 'poweRbal_data' which
+is a list containing the following objects:\cr
+\itemize{
+\item power: Numeric matrix containing the power values (one row per TSS and one
+column per alternative model).\cr
+\item accept_regions: Numeric matrix containing the information on the region of
+acceptance (one row per TSS and four columns).\cr
+\item CIradius: Numeric matrix containing the confidence interval radii (one row
+per TSS and one column per alternative model).\cr
+\item actual_sample_sizes: Numeric vector containing the actual sample sizes
+under each alternative model as some models do not always successfully
+generate trees. \cr
+\item other input data.
+}
+
+\code{powerComp_RegAcc} Returns an object of class 'poweRbal_data'
+similar to \code{powerComp}.
 }
 \description{
 \code{powerComp} - Compare the power of a set of TSS to identify trees
 generated under different alternative models given a null model.
+
+\code{powerComp_RegAcc} - Compare the power of a set of TSS to identify trees
+generated under different alternative models given a the region(s) of
+acceptance.
 }
 \examples{
 powerComp(tss = c("Sackin", "Colless", "B1I"),
-          alt_models = list(list("aldous",-1), "pda", "etm"), n=10L,
-          sample_size = 40L, with_CIradius = TRUE)
+          alt_models = list(list("aldous",-1), "pda", "etm"), n = 10L,
+          distribs = "sampled", N_null = 40L, N_alt = 20L)
+powerComp_RegAcc(tss = c("Sackin", "Colless", "B1I"),
+          accept_regions = getAccRegion(tss = c("Sackin", "Colless", "B1I"),
+                                        n = 6L, null_model = "etm",
+                                        N_null = 20L, distribs = "sampled"),
+          null_model = "etm", distribs = "sampled",
+          alt_models = list(list("aldous",-1), "pda", "yule"), n = 6L,
+          N_null = 20L, N_alt = 20L)
 }
-\author{
-Sophie Kersting
+\references{
+\itemize{
+\item S. J. Kersting, K. Wicke, and M. Fischer. Tree balance in phylogenetic models.
+arXiv:2406.05185, 2024.
+}
 }

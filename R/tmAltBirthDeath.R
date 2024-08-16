@@ -6,15 +6,13 @@
 #' In the alternative birth-death process all species have the same speciation
 #' \code{BIRTHRATE} and extinction rates \code{DEATHRATE}. Extinct species
 #' remain as fossils inside the tree with zero speciation and extinction
-#' rates. \cr
-#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-#' the number of leaves must be at least 2 since there must be at
-#' least one edge. \cr
-#'
-#' @author Sophie Kersting
+#' rates.
 #'
 #' @param n Integer value that specifies the desired number of leaves, i.e.,
-#' vertices with in-degree 1 and out-degree 0.
+#' vertices with in-degree 1 and out-degree 0.\cr
+#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+#' the number of leaves must be at least 2 since there must be at
+#' least one edge.
 #' @param BIRTHRATE Positive numeric value (default = 1) which specifies the
 #' rate at which the speciation events occur.
 #' @param DEATHRATE Positive numeric value (default = 0) which specifies the

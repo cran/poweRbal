@@ -1,6 +1,6 @@
 Package: poweRbal
 Title: Phylogenetic Tree Models and the Power of Tree Shape Statistics
-Version: 0.0.0.3
+Version: 0.0.1.1
 Authors@R: c(
     person("Sophie", "Kersting", , "sophie_kersting@gmx.de", 
     role = c("aut", "cre"), comment = c(ORCID = "0000-0002-1038-9246")),
@@ -27,9 +27,10 @@ Description: The first goal of this package is to provide a multitude of tree mo
 License: GPL (>= 3)
 Depends: R (>= 3.5.0)
 Imports: ape, scales, phytools, treebalance, R.utils, diversitree
+Suggests: memoise
 Encoding: UTF-8
 NeedsCompilation: no
 RoxygenNote: 7.3.1
-Packaged: 2024-06-27 07:43:47 UTC; Maus
+Packaged: 2024-08-16 09:52:27 UTC; Maus
 Repository: CRAN
-Date/Publication: 2024-06-28 09:20:02 UTC
+Date/Publication: 2024-08-16 11:00:02 UTC

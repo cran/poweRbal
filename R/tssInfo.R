@@ -23,8 +23,6 @@
 #'            tree itself and the computation time are the limiting factors.\cr
 #' - col: Color for the TSS (related TSS have similar colors).
 #'
-#' @author Sophie Kersting
-#'
 #' @references
 #'  - M. Fischer, L.Herbst, S. J. Kersting, L. Kühn, and K. Wicke,
 #'  Tree Balance Indices - A Comprehensive Survey. Springer, 2023.

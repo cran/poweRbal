@@ -54,25 +54,24 @@ under a tree model for each given TSS.
 TSS and all given trees.
 }
 \examples{
-# Example using tree models included in this package.
+# Example using tree models and TSS included in this package:
 getTSSdata(tss = c("Colless", "Sackin"), n = 5L, Ntrees = 3L,
-           tm = "yule")
-# Example using a "new" TM provided by the user.
+           tm = list("aldous", -1))
+# Example using a "new" tree model and a "new" TSS provided by the user:
 my_aldous <- list(func = function(n, Ntrees){
                         trees <- lapply(1:Ntrees,
                            function(x){genAldousBetaTree(n = n, BETA =5L)})
                         attr(trees, "class") <- "multiPhylo"
                         return(trees)})
-getTSSdata(tss = c("Colless", "Sackin"), n = 5L, Ntrees = 3L,
+my_avd <- list(func = treebalance::avgVertDep, short = "My AVD")
+getTSSdata(tss = c("Colless", "my_avd"), n = 5L, Ntrees = 3L,
            tm = "my_aldous")
 # Example using TSS provided in tssInfo.
 getTSSdata_trees(tss = c("Colless", "Sackin"),
-           treeList = lapply(1:6L, function(x) genYuleTree(5)))
+           treeList = genTrees(n = 5L, Ntrees = 3L, tm = "yule"))
 # Example using a "new" TSS provided by the user.
 my_avd <- list(func = treebalance::avgVertDep, short = "My AVD")
 getTSSdata_trees(tss = c("Colless", "my_avd"),
-           treeList = lapply(1:6L, function(x) genYuleTree(5)))
-}
-\author{
-Sophie Kersting
+           treeList = genTrees(n = 5L, Ntrees = 3L,
+                               tm = list("IF_sym", 2)))
 }

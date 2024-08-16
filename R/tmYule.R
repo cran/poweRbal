@@ -3,15 +3,13 @@
 #' \code{genYuleTree} - Generates a rooted binary tree in \code{phylo}
 #' format with the given number of \code{n} leaves under the Yule model.
 #' The Yule process is a simple birth-process in which all species have the same
-#' speciation rate.\cr
-#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-#' the number of leaves must be at least 2 since there must be at
-#' least one edge.
-#'
-#' @author Sophie Kersting
+#' speciation rate.
 #'
 #' @param n Integer value that specifies the desired number of leaves, i.e.,
-#' vertices with in-degree 1 and out-degree 0.
+#' vertices with in-degree 1 and out-degree 0.\cr
+#' Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+#' the number of leaves must be at least 2 since there must be at
+#' least one edge.
 #'
 #' @return \code{genYuleTree} A single tree of class \code{phylo} is returned.
 #'

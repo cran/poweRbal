@@ -8,7 +8,10 @@ genETMTree(n)
 }
 \arguments{
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
-vertices with in-degree 1 and out-degree 0.}
+vertices with in-degree 1 and out-degree 0.\cr
+Due to the restrictions of the \code{phylo} or \code{multiphylo} format,
+the number of leaves must be at least 2 since there must be at
+least one edge.}
 }
 \value{
 \code{genETMTree} A single tree of class \code{phylo} is returned.
@@ -18,10 +21,7 @@ vertices with in-degree 1 and out-degree 0.}
 format with the given number of \code{n} leaves under the
 equiprobable-types-model.
 Given \code{n}, all tree shapes/topologies with \code{n} leaves are
-equiprobable under the ETM.\cr
-Due to the restrictions of the \code{phylo} or \code{multiphylo} format
-the number of leaves must be at least 2 since there must be at
-least one edge.
+equiprobable under the ETM.
 }
 \examples{
 genETMTree(n = 5)
@@ -34,7 +34,4 @@ genETMTree(n = 5)
 phylogenetics and evolutionary analyses in R.”
 Bioinformatics, 35, 526-528, 2019).
 }
-}
-\author{
-Sophie Kersting
 }
