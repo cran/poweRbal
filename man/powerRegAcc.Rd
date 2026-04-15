@@ -184,7 +184,7 @@ significance and method.
 \code{getAccRegion_exact} - Computes the exact region of acceptance for the
 given null model based on quantiles for a specified level of significance
 and method. Currently, this is only implemented for
-\code{null_model = "yule"} or \code{"pda"}, and \code{n}<=20.
+\code{null_model = "yule"}, \code{"pda"}, or \code{"etm"}, and \code{n}<=20.
 
 \code{computeAccRegion} - Computes the bounds of the region of acceptance
 given the empirical distribution function (specified by the unique values
@@ -198,19 +198,39 @@ the region of acceptance. This probability is 0 for correction method
 "none" and for "small-sample" it ensures that the probability of rejection
 exactly corresponds with the specified cut-offs.
 }
+\details{
+The restriction to \code{n <= 20} arises from the rapid growth of the
+Wedderburn-Etherington numbers (the count of distinct unlabelled rooted
+binary tree topologies with \code{n} leaves), which makes exhaustive
+enumeration infeasible beyond this limit. The implementation iterates over
+all topologies using the Furnas rank rather than storing them
+simultaneously, which keeps memory usage tractable for \code{n <= 20}.
+For larger \code{n}, use \code{\link{getAccRegion}} with
+\code{distribs = "sampled"}.
+}
 \examples{
 getAccRegion(tss = c("Sackin", "Colless", "B1I"), n = 6L)
-getAccRegion(tss = c("Sackin", "Colless", "B1I"), n = 6L, null_model = "etm",
-             N_null = 20L, correction = "none", distribs = "sampled")
-getAccRegion(tss = c("Sackin", "Colless", "B1I"), n = 6L, N_null = 20L,
-             test_type = "two-tailed-unbiased", N_intervals = 5L,
-             N_alt = 10L)
-getAccRegion_sampled(tss = c("Sackin", "Colless", "B1I"), n = 6L,
-                     N_null = 20L, correction = "none")
-getAccRegion_exact(tss = c("Sackin", "Colless", "B1I"),
-                   null_model = "etm", n = 8L)
-computeAccRegion(unique_null_vals = c(1,2,3,4,5),
-                 unique_null_probs = c(0.1,0.4,0.1,0.2,0.2),
-                 correction = "small-sample",
-                 cutoff_left = 0.15, cutoff_right = 0.15)
+getAccRegion(
+  tss = c("Sackin", "Colless", "B1I"), n = 6L, null_model = "etm",
+  N_null = 20L, correction = "none", distribs = "sampled"
+)
+getAccRegion(
+  tss = c("Sackin", "Colless", "B1I"), n = 6L, N_null = 20L,
+  test_type = "two-tailed-unbiased", N_intervals = 5L,
+  N_alt = 10L
+)
+getAccRegion_sampled(
+  tss = c("Sackin", "Colless", "B1I"), n = 6L,
+  N_null = 20L, correction = "none"
+)
+getAccRegion_exact(
+  tss = c("Sackin", "Colless", "B1I"),
+  null_model = "etm", n = 8L
+)
+computeAccRegion(
+  unique_null_vals = c(1, 2, 3, 4, 5),
+  unique_null_probs = c(0.1, 0.4, 0.1, 0.2, 0.2),
+  correction = "small-sample",
+  cutoff_left = 0.15, cutoff_right = 0.15
+)
 }

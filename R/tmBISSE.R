@@ -23,11 +23,20 @@
 #' transition rates from A to B and from B to A (vector with 2 values >0).
 #' @param TRIES Integer value (default = 5) that specifies
 #' the number of attempts to generate a tree with \code{n} leaves.
-#' @param TIMEperTRY Numeric value (default = 0.1) that specifies the maximum
+#' @param TIMEperTRY Numeric value (default = 0.01) that specifies the maximum
 #' amount of time (in seconds) invested per try.
 #'
 #' @return \code{genBiSSETree} A single tree of class \code{phylo} is
-#' returned.
+#' returned. If no tree with exactly \code{n} leaves could be generated within
+#' \code{TRIES} attempts, \code{NULL} is returned and a warning is issued.
+#'
+#' @details
+#' Each attempt runs for at most \code{TIMEperTRY} seconds. An attempt fails
+#' if the generated tree does not have exactly \code{n} extant leaves or if
+#' the time limit is reached. Failure is more likely when birth rates are low,
+#' death rates are high, or \code{n} is large. Increasing \code{TRIES} or
+#' \code{TIMEperTRY} can help in such cases.
+#' This function requires the \code{diversitree} package.
 #'
 #' @references
 #'  - This function uses the \code{tree.bisse} function of the
@@ -44,40 +53,63 @@
 #'
 #' @examples
 #' if (requireNamespace("diversitree", quietly = TRUE)) {
-#' genBiSSETree(n = 5, BIRTHRATES = c(1,2), DEATHRATES = c(0,0),
-#'              TRANSRATES = c(0.1,0.3))
+#'   genBiSSETree(
+#'     n = 5, BIRTHRATES = c(1, 2), DEATHRATES = c(0, 0),
+#'     TRANSRATES = c(0.1, 0.3)
+#'   )
 #' }
-genBiSSETree <- function(n, BIRTHRATES = c(1,1), DEATHRATES = c(0,0),
+genBiSSETree <- function(n, BIRTHRATES = c(1, 1), DEATHRATES = c(0, 0),
                          TRANSRATES,
-                         TRIES = 5, TIMEperTRY = 0.1){
-  if(n < 2 || n%%1!=0){
-    stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+                         TRIES = 5, TIMEperTRY = 0.01) {
+  if (!requireNamespace("diversitree", quietly = TRUE)) {
+    stop("Package 'diversitree' is required for genBiSSETree(). Please install it")
   }
-  if(length(BIRTHRATES)!=2 || sum(BIRTHRATES<0)> 0 || sum(BIRTHRATES=0)> 1){
-    stop(paste("One of the two speciation rates must be >0 (both >=0)."))
+  if (n < 2 || n %% 1 != 0) {
+    stop(paste(
+      "A tree must have at least 2 leaves, i.e., n>=2 and n must be",
+      "an integer"
+    ))
   }
-  if(length(DEATHRATES)!=2 || sum(DEATHRATES<0)> 0){
-    stop(paste("The two extinction rates must be >=0."))
+  if (TRIES < 1 || TRIES %% 1 != 0) {
+    stop("TRIES must be a positive integer")
   }
-  if(length(TRANSRATES)!=2 || sum(TRANSRATES<0)> 0){
-    stop(paste("The two transition rates must be >=0."))
+  if (length(BIRTHRATES) != 2 || sum(BIRTHRATES < 0) > 0 || sum(BIRTHRATES == 0) > 1) {
+    stop("One of the two speciation rates must be >0 (both >=0)")
+  }
+  if (length(DEATHRATES) != 2 || sum(DEATHRATES < 0) > 0) {
+    stop("The two extinction rates must be >=0")
+  }
+  if (length(TRANSRATES) != 2 || sum(TRANSRATES < 0) > 0) {
+    stop("The two transition rates must be >=0")
   }
   phy <- NULL
-  i <- 1
-  while(i<=TRIES && is.null(phy)){
-    i <- i+1
-    tryCatch({
-      phy <- R.utils::withTimeout({
-        test <- diversitree::tree.bisse(pars = c(BIRTHRATES, DEATHRATES,
-                                                 TRANSRATES),
-                                max.taxa = n, include.extinct = FALSE)
-      }, timeout = TIMEperTRY)
-    }, TimeoutException = function(ex) {
-    NULL})
+  for (i in seq_len(TRIES)) {
+    tryCatch(
+      {
+        phy <- R.utils::withTimeout(
+          {
+            diversitree::tree.bisse(
+              pars = c(
+                BIRTHRATES, DEATHRATES,
+                TRANSRATES
+              ),
+              max.taxa = n, include.extinct = FALSE
+            )
+          },
+          timeout = TIMEperTRY
+        )
+      },
+      TimeoutException = function(ex) {
+        NULL
+      }
+    )
+    if (!is.null(phy)) break
   }
-  if(is.null(phy)){
-    comment("Not able to generate tree. Returning NULL instead.")
+  if (is.null(phy)) {
+    warning(
+      "Not able to generate tree with given parameters after ",
+      TRIES, " attempt(s). Returning NULL."
+    )
   }
   return(phy)
 }

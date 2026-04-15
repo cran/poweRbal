@@ -10,7 +10,7 @@ genBiSSETree(
   DEATHRATES = c(0, 0),
   TRANSRATES,
   TRIES = 5,
-  TIMEperTRY = 0.1
+  TIMEperTRY = 0.01
 )
 }
 \arguments{
@@ -33,12 +33,13 @@ transition rates from A to B and from B to A (vector with 2 values >0).}
 \item{TRIES}{Integer value (default = 5) that specifies
 the number of attempts to generate a tree with \code{n} leaves.}
 
-\item{TIMEperTRY}{Numeric value (default = 0.1) that specifies the maximum
+\item{TIMEperTRY}{Numeric value (default = 0.01) that specifies the maximum
 amount of time (in seconds) invested per try.}
 }
 \value{
 \code{genBiSSETree} A single tree of class \code{phylo} is
-returned.
+returned. If no tree with exactly \code{n} leaves could be generated within
+\code{TRIES} attempts, \code{NULL} is returned and a warning is issued.
 }
 \description{
 \code{genBiSSETree} - Generates a rooted binary tree in \code{phylo}
@@ -50,10 +51,20 @@ the state a speciation rate \code{BIRTHRATES}, an extinction rate
 Extinct species are removed from the tree, i.e., the generated tree contains
 only species living at the present.
 }
+\details{
+Each attempt runs for at most \code{TIMEperTRY} seconds. An attempt fails
+if the generated tree does not have exactly \code{n} extant leaves or if
+the time limit is reached. Failure is more likely when birth rates are low,
+death rates are high, or \code{n} is large. Increasing \code{TRIES} or
+\code{TIMEperTRY} can help in such cases.
+This function requires the \code{diversitree} package.
+}
 \examples{
 if (requireNamespace("diversitree", quietly = TRUE)) {
-genBiSSETree(n = 5, BIRTHRATES = c(1,2), DEATHRATES = c(0,0),
-             TRANSRATES = c(0.1,0.3))
+  genBiSSETree(
+    n = 5, BIRTHRATES = c(1, 2), DEATHRATES = c(0, 0),
+    TRANSRATES = c(0.1, 0.3)
+  )
 }
 }
 \references{

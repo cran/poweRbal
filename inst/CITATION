@@ -1,11 +1,15 @@
 bibentry(
-  "Article",
-  title = "Tree balance in phylogenetic models",
-  author = "Sophie Kersting, Kristina Wicke, Mareike Fischer",
-  year = 2024,
-  journal = "arXiv e-prints",
-  doi = "10.21105/joss.01686",
-  archivePrefix = "arXiv",
-  eid     = "arXiv:2406.05185",
-  eprint  = "2406.05185"
+  bibtype  = "Article",
+  title    = "Tree balance in phylogenetic models",
+  author   = c(
+    person("Sophie J", "Kersting"),
+    person("Kristina", "Wicke"),
+    person("Mareike", "Fischer")
+  ),
+  journal  = "Philosophical Transactions of the Royal Society B: Biological Sciences",
+  volume   = "380",
+  number   = "1919",
+  year     = "2025",
+  doi      = "10.1098/rstb.2023.0303",
+  publisher = "The Royal Society"
 )

@@ -1,3 +1,168 @@
+# Registry of built-in growing models: each entry contains a validate function,
+# a param_setup function (returns updated ZETA/SIGMA/STARTING_TRAIT), and the
+# four rate/trait functions. Adding a new model requires only a new list entry.
+.grow_model_registry <- list(
+  DCO_sym = list(
+    validate = function(ZETA, SIGMA) if (ZETA <= 0) stop("The parameter ZETA must be >0 for DCO (sym)"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = ZETA, SIGMA = NULL, STARTING_TRAIT = NULL),
+    childRates = function(sr, st, pr, pt, ct, ze, si) c(sr * ze, sr * ze),
+    otherRates = function(sr, st, or, ot, ze, si) sr,
+    childTraits = NULL, otherTraits = NULL
+  ),
+  DCO_asym = list(
+    validate = function(ZETA, SIGMA) if (ZETA <= 0) stop("The parameter ZETA must be >0 for DCO (asym)"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = ZETA, SIGMA = NULL, STARTING_TRAIT = NULL),
+    childRates = function(sr, st, pr, pt, ct, ze, si) c(sr * ze, pr),
+    otherRates = function(sr, st, or, ot, ze, si) sr,
+    childTraits = NULL, otherTraits = NULL
+  ),
+  IF_sym = list(
+    validate = function(ZETA, SIGMA) if (ZETA <= 0) stop("The parameter ZETA must be >0 for IF (sym)"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = ZETA, SIGMA = NULL, STARTING_TRAIT = NULL),
+    childRates = function(sr, st, pr, pt, ct, ze, si) c(pr * ze, pr * ze),
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = NULL, otherTraits = NULL
+  ),
+  IF_asym = list(
+    validate = function(ZETA, SIGMA) if (ZETA <= 0) stop("The parameter ZETA must be >0 for IF (asym)"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = ZETA, SIGMA = NULL, STARTING_TRAIT = NULL),
+    childRates = function(sr, st, pr, pt, ct, ze, si) c(pr * ze, pr),
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = NULL, otherTraits = NULL
+  ),
+  "IF-diff" = list(
+    validate = function(ZETA, SIGMA) if (ZETA < 1) stop("The parameter ZETA must be >=1 for IF-diff"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = ZETA, SIGMA = NULL, STARTING_TRAIT = NULL),
+    childRates = function(sr, st, pr, pt, ct, ze, si) c(2 * pr * ze / (ze + 1), 2 * pr / (ze + 1)),
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = NULL, otherTraits = NULL
+  ),
+  biased = list(
+    validate = function(ZETA, SIGMA) if (ZETA < 0 || ZETA > 1) stop("The parameter ZETA must be in [0,1] for biased speciation"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = ZETA, SIGMA = NULL, STARTING_TRAIT = NULL),
+    childRates = function(sr, st, pr, pt, ct, ze, si) c(pr * ze, pr * (1 - ze)),
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = NULL, otherTraits = NULL
+  ),
+  ASB = list(
+    validate = function(ZETA, SIGMA) if (ZETA <= 0) stop("The parameter ZETA must be >0 for age-step-based fertility"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = ZETA, SIGMA = NULL, STARTING_TRAIT = NULL),
+    childRates = function(sr, st, pr, pt, ct, ze, si) c(sr, sr),
+    otherRates = function(sr, st, or, ot, ze, si) or * ze,
+    childTraits = NULL, otherTraits = NULL
+  ),
+  simpleBrown_sym = list(
+    validate = function(ZETA, SIGMA) if (SIGMA < 0) stop("The parameter SIGMA must be >0 for sym. simple Brownian"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = NULL, SIGMA = SIGMA, STARTING_TRAIT = NULL),
+    childRates = function(sr, st, pr, pt, ct, ze, si) {
+      c(
+        max(c(1e-100, pr + stats::rnorm(1, mean = 0, sd = si))),
+        max(c(1e-100, pr + stats::rnorm(1, mean = 0, sd = si)))
+      )
+    },
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = NULL, otherTraits = NULL
+  ),
+  simpleBrown_asym = list(
+    validate = function(ZETA, SIGMA) if (SIGMA < 0) stop("The parameter SIGMA must be >=0 for asym. simple Brownian"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = NULL, SIGMA = SIGMA, STARTING_TRAIT = NULL),
+    childRates = function(sr, st, pr, pt, ct, ze, si) {
+      c(max(c(1e-100, pr + stats::rnorm(1, mean = 0, sd = si))), pr)
+    },
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = NULL, otherTraits = NULL
+  ),
+  "lin-Brown_sym" = list(
+    validate = function(ZETA, SIGMA) if (length(SIGMA) != 2 || SIGMA[1] < 0 || SIGMA[2] < 0) stop("The parameter SIGMA must be a vector of two values >=0 for sym. linear-Brownian"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = NULL, SIGMA = SIGMA, STARTING_TRAIT = STARTING_TRAIT),
+    childRates = function(sr, st, pr, pt, ct, ze, si) {
+      c(
+        10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])),
+        10^(log10(ct[2]) + stats::rnorm(1, mean = 0, sd = si[1]))
+      )
+    },
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = function(sr, st, pr, pt, ze, si) {
+      c(
+        max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]), 1e-100)),
+        max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]), 1e-100))
+      )
+    },
+    otherTraits = function(sr, st, or, ot, ze, si) ot
+  ),
+  "lin-Brown_asym" = list(
+    validate = function(ZETA, SIGMA) if (length(SIGMA) != 2 || SIGMA[1] < 0 || SIGMA[2] < 0) stop("The parameter SIGMA must be a vector of two values >=0 for asym. linear-Brownian"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = NULL, SIGMA = SIGMA, STARTING_TRAIT = STARTING_TRAIT),
+    childRates = function(sr, st, pr, pt, ct, ze, si) {
+      c(10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])), pr)
+    },
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = function(sr, st, pr, pt, ze, si) {
+      c(max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]), 1e-100)), pt)
+    },
+    otherTraits = function(sr, st, or, ot, ze, si) ot
+  ),
+  "lin-Brown-bounded_sym" = list(
+    validate = function(ZETA, SIGMA) if (length(SIGMA) != 2 || SIGMA[1] < 0 || SIGMA[2] < 0) stop("The parameter SIGMA must be a vector of two values >=0 for bounded sym. linear-Brownian"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = NULL, SIGMA = SIGMA, STARTING_TRAIT = 10),
+    childRates = function(sr, st, pr, pt, ct, ze, si) {
+      c(
+        10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])),
+        10^(log10(ct[2]) + stats::rnorm(1, mean = 0, sd = si[1]))
+      )
+    },
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = function(sr, st, pr, pt, ze, si) {
+      c(
+        min(c(max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]), 0)), 20)),
+        min(c(max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]), 0)), 20))
+      )
+    },
+    otherTraits = function(sr, st, or, ot, ze, si) ot
+  ),
+  "lin-Brown-bounded_asym" = list(
+    validate = function(ZETA, SIGMA) if (length(SIGMA) != 2 || SIGMA[1] < 0 || SIGMA[2] < 0) stop("The parameter SIGMA must be a vector of two values >=0 for bounded asym. linear-Brownian"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = NULL, SIGMA = SIGMA, STARTING_TRAIT = 10),
+    childRates = function(sr, st, pr, pt, ct, ze, si) {
+      c(10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])), pr)
+    },
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = function(sr, st, pr, pt, ze, si) {
+      c(min(c(max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]), 0)), 20)), pt)
+    },
+    otherTraits = function(sr, st, or, ot, ze, si) ot
+  ),
+  "log-Brown_sym" = list(
+    validate = function(ZETA, SIGMA) if (length(SIGMA) != 2 || SIGMA[1] < 0 || SIGMA[2] < 0) stop("The parameter SIGMA must be a vector of two values >=0 for sym. log-Brownian"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = NULL, SIGMA = SIGMA, STARTING_TRAIT = STARTING_TRAIT),
+    childRates = function(sr, st, pr, pt, ct, ze, si) {
+      c(
+        10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])),
+        10^(log10(ct[2]) + stats::rnorm(1, mean = 0, sd = si[1]))
+      )
+    },
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = function(sr, st, pr, pt, ze, si) {
+      c(
+        10^(log10(pt) + stats::rnorm(1, mean = 0, sd = si[2])),
+        10^(log10(pt) + stats::rnorm(1, mean = 0, sd = si[2]))
+      )
+    },
+    otherTraits = function(sr, st, or, ot, ze, si) ot
+  ),
+  "log-Brown_asym" = list(
+    validate = function(ZETA, SIGMA) if (length(SIGMA) != 2 || SIGMA[1] < 0 || SIGMA[2] < 0) stop("The parameter SIGMA must be a vector of two values >=0 for asym. log-Brownian"),
+    param_setup = function(ZETA, SIGMA, STARTING_TRAIT) list(ZETA = NULL, SIGMA = SIGMA, STARTING_TRAIT = STARTING_TRAIT),
+    childRates = function(sr, st, pr, pt, ct, ze, si) {
+      c(10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])), pr)
+    },
+    otherRates = function(sr, st, or, ot, ze, si) or,
+    childTraits = function(sr, st, pr, pt, ze, si) {
+      c(10^(log10(pt) + stats::rnorm(1, mean = 0, sd = si[2])), pt)
+    },
+    otherTraits = function(sr, st, or, ot, ze, si) ot
+  )
+)
 #' Generation of rooted binary trees under tree growing models (no extinction)
 #'
 #' \code{genGrowTree} - Generates a rooted binary tree in \code{phylo}
@@ -174,254 +339,118 @@ genGrowTree <- function(n,
                         ZETA = 1, SIGMA = 0,
                         childRates, otherRates,
                         childTraits = NULL, otherTraits = NULL,
-                        use_built_in = NULL){
-  if(n < 2 || n%%1!=0){
-    stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+                        use_built_in = NULL) {
+  if (n < 2 || n %% 1 != 0) {
+    stop(paste(
+      "A tree must have at least 2 leaves, i.e., n>=2 and n must be",
+      "an integer"
+    ))
   }
-  if(STARTING_RATE<=0){
-    stop(paste("The speciation starting rate must be >0."))
+  if (STARTING_RATE <= 0) {
+    stop("The speciation starting rate must be >0")
   }
-  if(!is.null(use_built_in)){
-    if (use_built_in == "DCO_sym") {
-      if(ZETA<=0){
-        stop("The parameter ZETA must be >0 for DCO (sym).")
-      }
-      SIGMA <- NULL; STARTING_TRAIT <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si) return(c(sr*ze, sr*ze))
-      otherRates <- function(sr, st, or, ot, ze, si) return(sr)
-      childTraits <- NULL
-      otherTraits <- NULL
-    } else if (use_built_in == "DCO_asym") {
-      if(ZETA<=0){
-        stop("The parameter ZETA must be >0 for DCO (asym).")
-      }
-      SIGMA <- NULL; STARTING_TRAIT <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si) return(c(sr*ze, pr))
-      otherRates <- function(sr, st, or, ot, ze, si) return(sr)
-      childTraits <- NULL
-      otherTraits <- NULL
-    } else if (use_built_in == "IF_sym") {
-      if(ZETA<=0){
-        stop("The parameter ZETA must be >0 for IF (sym).")
-      }
-      SIGMA <- NULL; STARTING_TRAIT <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si) return(c(pr*ze, pr*ze))
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- NULL
-      otherTraits <- NULL
-    } else if (use_built_in == "IF_asym") {
-      if(ZETA<=0){
-        stop("The parameter ZETA must be >0 for IF (asym).")
-      }
-      SIGMA <- NULL; STARTING_TRAIT <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si) return(c(pr*ze, pr))
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- NULL
-      otherTraits <- NULL
-    } else if (use_built_in == "IF-diff") {
-      if(ZETA<1){
-        stop("The parameter ZETA must be >=1 for IF-diff.")
-      }
-      SIGMA <- NULL; STARTING_TRAIT <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(2*pr*ze/(ze+1), 2*pr/(ze+1)))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- NULL
-      otherTraits <- NULL
-    } else if (use_built_in == "biased") {
-      if(ZETA<0 || ZETA >1){
-        stop("The parameter ZETA must be in [0,1] for biased speciation.")
-      }
-      SIGMA <- NULL; STARTING_TRAIT <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(pr*ze, pr*(1-ze)))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- NULL
-      otherTraits <- NULL
-    } else if (use_built_in == "ASB") {
-      if(ZETA<=0){
-        stop("The parameter ZETA must be >0 for age-step-based fertility.")
-      }
-      SIGMA <- NULL; STARTING_TRAIT <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si) return(c(sr, sr))
-      otherRates <- function(sr, st, or, ot, ze, si) return(or * ze)
-      childTraits <- NULL
-      otherTraits <- NULL
-    } else if (use_built_in == "simpleBrown_sym") {
-      if(SIGMA<0){
-        stop("The parameter SIGMA must be >0 for sym. simple Brownian.")
-      }
-      ZETA <- NULL; STARTING_TRAIT <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(max(c(1e-100, pr + stats::rnorm(1, mean = 0, sd = si))),
-                 max(c(1e-100, pr + stats::rnorm(1, mean = 0, sd = si)))))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- NULL
-      otherTraits <- NULL
-    } else if (use_built_in == "simpleBrown_asym") {
-      if(SIGMA<0){
-        stop("The parameter SIGMA must be >=0 for asym. simple Brownian.")
-      }
-      ZETA <- NULL; STARTING_TRAIT <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(max(c(1e-100, pr + stats::rnorm(1, mean = 0, sd = si))), pr))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- NULL
-      otherTraits <- NULL
-    } else if (use_built_in == "lin-Brown_sym") {
-      if(length(SIGMA)!= 2 || SIGMA[1]<0 || SIGMA[2]<0){
-        stop(paste("The parameter SIGMA must be a vector of two values >=0",
-                   "for sym. linear-Brownian."))
-      }
-      ZETA <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])),
-                 10^(log10(ct[2]) + stats::rnorm(1, mean = 0, sd = si[1]))))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- function(sr, st, pr, pt, ze, si){
-        return(c(max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]),1e-100)),
-                 max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]),1e-100))))}
-      otherTraits <-  function(sr, st, or, ot, ze, si) return(ot)
-    } else if (use_built_in == "lin-Brown_asym") {
-      if(length(SIGMA)!= 2 || SIGMA[1]<0 || SIGMA[2]<0){
-        stop(paste("The parameter SIGMA must be a vector of two values >=0",
-                   "for sym. linear-Brownian."))
-      }
-      ZETA <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(10^(log10(ct[1]) + stats::rnorm(1, mean=0, sd = si[1])), pr))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- function(sr, st, pr, pt, ze, si){
-        return(c(max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]),1e-100)), pt))}
-      otherTraits <-  function(sr, st, or, ot, ze, si) return(ot)
-    } else if (use_built_in == "lin-Brown-bounded_sym") {
-      if(length(SIGMA)!= 2 || SIGMA[1]<0 || SIGMA[2]<0){
-        stop(paste("The parameter SIGMA must be a vector of two values >=0",
-                   "for bounded sym. linear-Brownian."))
-      }
-      STARTING_TRAIT <- 10
-      ZETA <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])),
-                 10^(log10(ct[2]) + stats::rnorm(1, mean = 0, sd = si[1]))))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- function(sr, st, pr, pt, ze, si){
-        return(c(min(c(max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]),0)),20)),
-                 min(c(max(c(pt + stats::rnorm(1, mean = 0, sd = si[2]),0)),20))))}
-      otherTraits <-  function(sr, st, or, ot, ze, si) return(ot)
-    } else if (use_built_in == "lin-Brown-bounded_asym") {
-      if(length(SIGMA)!= 2 || SIGMA[1]<0 || SIGMA[2]<0){
-        stop(paste("The parameter SIGMA must be a vector of two values >=0",
-                   "for bounded sym. linear-Brownian."))
-      }
-      STARTING_TRAIT <- 10
-      ZETA <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])),
-                 pr))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- function(sr, st, pr, pt, ze, si){
-        return(c(min(c(max(c(pt + stats::rnorm(1, mean = 0, sd =si[2]),0)),20)),
-                 pt))}
-      otherTraits <-  function(sr, st, or, ot, ze, si) return(ot)
-    } else if (use_built_in == "log-Brown_sym") {
-      if(length(SIGMA)!= 2 || SIGMA[1]<0 || SIGMA[2]<0){
-        stop(paste("The parameter SIGMA must be a vector of two values >=0",
-                   "for sym. log-Brownian."))
-      }
-      ZETA <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])),
-                 10^(log10(ct[2]) + stats::rnorm(1, mean = 0, sd = si[1]))))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- function(sr, st, pr, pt, ze, si){
-        return(c(10^(log10(pt) + stats::rnorm(1, mean = 0, sd = si[2])),
-                 10^(log10(pt) + stats::rnorm(1, mean = 0, sd = si[2]))))}
-      otherTraits <-  function(sr, st, or, ot, ze, si) return(ot)
-    } else if (use_built_in == "log-Brown_asym") {
-      if(length(SIGMA)!= 2 || SIGMA[1]<0 || SIGMA[2]<0){
-        stop(paste("The parameter SIGMA must be a vector of two values >=0",
-                   "for sym. log-Brownian."))
-      }
-      ZETA <- NULL
-      childRates <- function(sr, st, pr, pt, ct, ze, si){
-        return(c(10^(log10(ct[1]) + stats::rnorm(1, mean = 0, sd = si[1])),
-                 pr))}
-      otherRates <- function(sr, st, or, ot, ze, si) return(or)
-      childTraits <- function(sr, st, pr, pt, ze, si){
-        return(c(10^(log10(pt) + stats::rnorm(1, mean = 0, sd = si[2])), pt))}
-      otherTraits <-  function(sr, st, or, ot, ze, si) return(ot)
-    } else {
-      stop("Unknown tree growing model.")
-    }
+  if (!is.null(use_built_in) && !is.character(use_built_in)) {
+    stop("use_built_in must be a character string or NULL")
+  }
+  if (!is.null(use_built_in)) {
+    model_def <- .grow_model_registry[[use_built_in]]
+    if (is.null(model_def)) stop("Unknown tree growing model")
+    model_def$validate(ZETA, SIGMA)
+    params <- model_def$param_setup(ZETA, SIGMA, STARTING_TRAIT)
+    ZETA <- params$ZETA
+    SIGMA <- params$SIGMA
+    STARTING_TRAIT <- params$STARTING_TRAIT
+    childRates <- model_def$childRates
+    otherRates <- model_def$otherRates
+    childTraits <- model_def$childTraits
+    otherTraits <- model_def$otherTraits
   }
   # Create the edge matrix -----------------------------------------------------
-  m <- matrix(rep(NA,(2*n-2)*2), nrow = 2*n-2, ncol = 2)
+  m <- matrix(rep(NA, (2 * n - 2) * 2), nrow = 2 * n - 2, ncol = 2)
   # Initialize vector for current leaves and their rates -----------------------
   curr_leaves <- 1 # Vector of the current leaves (start: only one node)
   curr_rates <- STARTING_RATE
   # Initialize vector for current trait values ---------------------------------
-  curr_traits <- rep(NA, 2*n-1) # set to NA if traits are not used
+  curr_traits <- rep(NA, 2 * n - 1) # set to NA if traits are not used
   TRAITS_ARE_USED <- FALSE
-  if(!is.null(childTraits) && !is.null(otherTraits)){
+  if (!is.null(childTraits) && !is.null(otherTraits)) {
     TRAITS_ARE_USED <- TRUE
     curr_traits <- STARTING_TRAIT
   }
   # Do (n-1) speciation steps --------------------------------------------------
-  for(i in 1:(n-1)) {
-    leaf_index <- sample(1:length(curr_leaves), size = 1, replace = F,
-                         prob = curr_rates) # Choose leaf for speciation
+  for (i in 1:(n - 1)) {
+    leaf_index <- sample(1:length(curr_leaves),
+      size = 1, replace = F,
+      prob = curr_rates
+    ) # Choose leaf for speciation
     # New numbers for children
-    c_1 <- 2*i
-    c_2 <- 1+2*i
+    c_1 <- 2 * i
+    c_2 <- 1 + 2 * i
     # Fill out matrix row by row (edges: parent->child)
-    m[2*i-1,] <- c(curr_leaves[leaf_index], c_1)
-    m[2*i,] <- c(curr_leaves[leaf_index], c_2)
+    m[2 * i - 1, ] <- c(curr_leaves[leaf_index], c_1)
+    m[2 * i, ] <- c(curr_leaves[leaf_index], c_2)
     # Remove parent from current leaves and insert children.
     curr_leaves <- c(curr_leaves[-leaf_index], c_1, c_2)
     # Update the traits if necessary, remove parent value and insert children's
     # trait values.
-    if(TRAITS_ARE_USED){
-      new_child_traits <- childTraits(sr = STARTING_RATE, st = STARTING_TRAIT,
-                                      pr = curr_rates[leaf_index],
-                                      pt = curr_traits[leaf_index],
-                                      ze = ZETA, si = SIGMA)
-      if(i>1){
-        new_other_traits <- sapply((1:i)[-leaf_index],
-                                   function(x) {
-                                     otherTraits(sr = STARTING_RATE,
-                                                 st = STARTING_TRAIT,
-                                                 or = curr_rates[x],
-                                                 ot = curr_traits[x],
-                                                 ze = ZETA, si = SIGMA)})
+    if (TRAITS_ARE_USED) {
+      new_child_traits <- childTraits(
+        sr = STARTING_RATE, st = STARTING_TRAIT,
+        pr = curr_rates[leaf_index],
+        pt = curr_traits[leaf_index],
+        ze = ZETA, si = SIGMA
+      )
+      if (i > 1) {
+        new_other_traits <- sapply(
+          (1:i)[-leaf_index],
+          function(x) {
+            otherTraits(
+              sr = STARTING_RATE,
+              st = STARTING_TRAIT,
+              or = curr_rates[x],
+              ot = curr_traits[x],
+              ze = ZETA, si = SIGMA
+            )
+          }
+        )
       } else {
         new_other_traits <- NULL
       }
       curr_traits <- c(new_other_traits, new_child_traits)
     }
     # Update the rates, remove parent rate and insert children's rates.
-    new_child_rates <- childRates(sr = STARTING_RATE, st = STARTING_TRAIT,
-                                  pr = curr_rates[leaf_index],
-                                  pt = curr_traits[leaf_index],
-                                  ct = curr_traits[i:(i+1)],
-                                  ze = ZETA, si = SIGMA)
-    if(i>1){
-      new_other_rates <- sapply((1:i)[-leaf_index],
-                                 function(x) {
-                                   otherRates(sr = STARTING_RATE,
-                                               st = STARTING_TRAIT,
-                                               or = curr_rates[x],
-                                               ot = curr_traits[x],
-                                               ze = ZETA, si = SIGMA)})
+    new_child_rates <- childRates(
+      sr = STARTING_RATE, st = STARTING_TRAIT,
+      pr = curr_rates[leaf_index],
+      pt = curr_traits[leaf_index],
+      ct = utils::tail(curr_traits, 2),
+      ze = ZETA, si = SIGMA
+    )
+    if (i > 1) {
+      new_other_rates <- sapply(
+        (1:i)[-leaf_index],
+        function(x) {
+          otherRates(
+            sr = STARTING_RATE,
+            st = STARTING_TRAIT,
+            or = curr_rates[x],
+            ot = curr_traits[x],
+            ze = ZETA, si = SIGMA
+          )
+        }
+      )
     } else {
       new_other_rates <- NULL
     }
     curr_rates <- c(new_other_rates, new_child_rates)
   }
   # Create the phylo object and enumerate cladewise ----------------------------
-  phy <- list(edge = m, tip.label = paste("t", sample.int(n,n), sep = ""),
-              Nnode = as.integer(n-1))
-  attr(phy, "class") <- "phylo"
+  phy <- structure(
+    list(
+      edge = m, tip.label = paste("t", sample.int(n, n), sep = ""),
+      Nnode = as.integer(n - 1)
+    ),
+    class = "phylo"
+  )
   return(enum2cladewise(phy, root = 1))
 }

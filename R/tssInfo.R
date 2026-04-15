@@ -144,7 +144,7 @@ tssInfo <- list(
                 name=expression(paste("Mean ",italic("I"),
                                       "' index")),
                 func=function(tree){treebalance::IbasedI(tree, method = "mean",
-                                    correction = "prime", logs = F)},
+                                    correction = "prime", logs = FALSE)},
                 type = "imbali", only_binary = FALSE, safe_n = c(4,Inf),
                 col = "olivedrab4"),
   #-----------------------------------------------------------------------------
@@ -211,7 +211,7 @@ tssInfo <- list(
                name=expression(paste("Total ",italic("I"),
                                      "' index")),
                func=function(tree){treebalance::IbasedI(tree, method = "total",
-                                   correction = "prime", logs = F)},
+                                   correction = "prime", logs = FALSE)},
                type = "imbali", only_binary = FALSE, safe_n = c(4,Inf),
                col = "olivedrab2"),
   #-----------------------------------------------------------------------------

@@ -43,14 +43,14 @@ enum2cladewise <- function(phy, root = NULL){
   m <- phy$Nnode
   if ((m + n - 1) != nrow(phy$edge)) {
     stop(paste("The input must fulfill |V|-1=|E|=nrow(phy$edge)",
-               "to be a tree.\n"))
+               "to be a tree"))
   }
   node_labs <- sort(unique(as.vector(phy$edge)))
   if (length(node_labs)!= m+n) {
-    stop("Not all |V|-many nodes have a unique enumeration.")
+    stop("Not all |V|-many nodes have a unique enumeration")
   }
   if (sum(node_labs %%1 !=0)>0 || sum(node_labs <=0)>0) {
-    stop("Nodes must be labeled with integers >0.\n")
+    stop("Nodes must be labeled with integers >0")
   }
   # and if necessary change node enumeration to 1,...,|V|
   if (!identical(seq(1,(m+n)), node_labs)) {
@@ -82,11 +82,12 @@ enum2cladewise <- function(phy, root = NULL){
   }
   # 3.) Create the cladewise order.
   phy$node.descs <- .getDescs(phy) # ---------------- remove afterwards
+  on.exit(phy$node.descs <- NULL, add = TRUE)
   cladew_nodes <- NULL
   cladew_edges <- NULL
   node_stack <- root_candidate
   edge_stack <- NA
-  is_leaf <- rep(F, n+m)
+  is_leaf <- rep(FALSE, n+m)
   corresp_leafedge <- rep(NA, n+m)
   while(length(node_stack)>0){
     curr_node <- node_stack[1]
@@ -94,7 +95,7 @@ enum2cladewise <- function(phy, root = NULL){
     cladew_edges <- c(cladew_edges, edge_stack[1])
     child_temp <- .getChildren(phy, curr_node, method = "alsoEdges")
     if(is.null(child_temp)){
-      is_leaf[curr_node] <- T
+      is_leaf[curr_node] <- TRUE
       corresp_leafedge[curr_node] <- edge_stack[1]
     }
     node_stack <- c(child_temp[1,], node_stack[-1])
@@ -119,14 +120,18 @@ enum2cladewise <- function(phy, root = NULL){
   phy$edge <- matrix(new_enum[phy$edge], byrow = FALSE, ncol=2)
   # Change edge order:
   phy$edge <- phy$edge[cladew_edges[-1],]
-  phy$edge.length <- phy$edge.length[cladew_edges[-1]]
+  if(!is.null(phy$edge.length)) {
+    phy$edge.length <- phy$edge.length[cladew_edges[-1]]
+  }
   # Change order-attribute:
   attr(phy, "order") <- "cladewise"
   return(phy)
 }
 
 
-# Method to access the children of a node (copied from package 'treeDbalance').
+# Method to access the children of a node.
+# Copied from the R package 'treeDbalance' (Fischer, Kersting, Kühn & Möller),
+# licensed under GPL (>= 3). Source: https://CRAN.R-project.org/package=treeDbalance
 .getDescs <- function(tree){
   n <- length(tree$tip.label)
   m <- tree$Nnode
@@ -148,11 +153,12 @@ enum2cladewise <- function(phy, root = NULL){
   return(cbind(rbind(descs,edge_to_desc,descs_index), c(NA,NA,m+n)))
 }
 
-# Method to access the children of a node (copied from package 'treeDbalance').
+# Method to access the children of a node.
+# Copied from the R package 'treeDbalance' (Fischer, Kersting, Kühn & Möller),
+# licensed under GPL (>= 3). Source: https://CRAN.R-project.org/package=treeDbalance
 .getChildren <- function(tree, node, method = "onlyNodes"){
   if(!"node.descs" %in% attributes(tree)$names){
-    comment(paste("This may take longer as the attribute 'node.descs'",
-                  "does not exist and has to be calculated first."))
+    message("This may take longer as 'node.descs' does not exist and will be computed.")
     tree$node.descs <- .getDescs(tree)
   }
   desc <- tree$node.descs
@@ -175,6 +181,6 @@ enum2cladewise <- function(phy, root = NULL){
     }
 
   }else{
-    stop("Unknown method to getChildren of a node.")
+    stop("Unknown method to getChildren of a node")
   }
 }

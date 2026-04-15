@@ -41,18 +41,18 @@
 genAldousBetaTree <- function(n, BETA){
   if(n < 2 || n%%1!=0){
     stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+               "an integer"))
   }
   if(BETA < (-2)){
-    stop(paste("The parameter BETA must be >=-2."))
+    stop("The parameter BETA must be >=-2")
   }
   # Use the auxiliary recursion to generate the edge matrix.
   edges <- .aldousBetaRecursion(BETA = BETA, n = n, nextFreeEnum = 1)
   # Create an environment that can be passed by reference and build the tree.
-  phy <- list(edge = edges,
-              tip.label = paste("t", sample.int(n,n), sep = ""),
-              Nnode = n-1)
-  attr(phy, "class") <- "phylo"
+  phy <- structure(list(edge = edges,
+                        tip.label = paste("t", sample.int(n,n), sep = ""),
+                        Nnode = n-1),
+                   class = "phylo")
   # Last, change enumeration of nodes to fit 'cladewise' enumeration
   # and return the tree.
   return(enum2cladewise(phy, root = 1))
@@ -61,14 +61,15 @@ genAldousBetaTree <- function(n, BETA){
 # Function for computing the probability of splitting n leaves into subsets
 # of size i and n-i using the gamma function with parameter BETA.
 .q_n <- function(i,BETA,n) {
-  return(gamma(BETA+i+1)*gamma(BETA+n-i+1)/(gamma(i+1)*gamma(n-i+1)))
+  return(exp(lgamma(BETA+i+1) + lgamma(BETA+n-i+1) -
+               lgamma(i+1) - lgamma(n-i+1)))
 }
 
 # Recursion for bipartitioning the set of leaves and creating the corresponding
 # edge matrix.
 .aldousBetaRecursion <- function(BETA, n, nextFreeEnum = 1) {
   if(n<2){
-    stop("n must be >=2 for this recursion.")
+    stop("n must be >=2 for this recursion")
   }
   # Partition into i and n-i leaves.
   if(BETA == (-2)){
@@ -77,6 +78,8 @@ genAldousBetaTree <- function(n, BETA){
     beta_probs <- sapply(1:(n-1), function(x) {.q_n(x,BETA,n)})
     not_NA <- !is.na(beta_probs)
     if(sum(not_NA)<1){
+      warning(paste("All split probabilities are NA for BETA =", BETA,
+                    "and n =", n, ". Falling back to uniform split."))
       i <- sample.int(n-1 ,1)
     } else {
       i <- sample(x=(1:(n-1))[not_NA] , size=1L , prob = beta_probs[not_NA])

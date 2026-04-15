@@ -158,16 +158,22 @@ generated under different alternative models given a the region(s) of
 acceptance.
 }
 \examples{
-powerComp(tss = c("Sackin", "Colless", "B1I"),
-          alt_models = list(list("aldous",-1), "pda", "etm"), n = 10L,
-          distribs = "sampled", N_null = 40L, N_alt = 20L)
-powerComp_RegAcc(tss = c("Sackin", "Colless", "B1I"),
-          accept_regions = getAccRegion(tss = c("Sackin", "Colless", "B1I"),
-                                        n = 6L, null_model = "etm",
-                                        N_null = 20L, distribs = "sampled"),
-          null_model = "etm", distribs = "sampled",
-          alt_models = list(list("aldous",-1), "pda", "yule"), n = 6L,
-          N_null = 20L, N_alt = 20L)
+powerComp(
+  tss = c("Sackin", "Colless", "B1I"),
+  alt_models = list(list("aldous", -1), "pda", "etm"), n = 10L,
+  distribs = "sampled", N_null = 40L, N_alt = 20L
+)
+powerComp_RegAcc(
+  tss = c("Sackin", "Colless", "B1I"),
+  accept_regions = getAccRegion(
+    tss = c("Sackin", "Colless", "B1I"),
+    n = 6L, null_model = "etm",
+    N_null = 20L, distribs = "sampled"
+  ),
+  null_model = "etm", distribs = "sampled",
+  alt_models = list(list("aldous", -1), "pda", "yule"), n = 6L,
+  N_null = 20L, N_alt = 20L
+)
 }
 \references{
 \itemize{

@@ -26,7 +26,8 @@ amount of time (in seconds) invested per try.}
 }
 \value{
 \code{genDensityTree} A single tree of class \code{phylo} is
-returned.
+returned. If no tree with exactly \code{n} leaves could be generated within
+\code{TRIES} attempts, \code{NULL} is returned and a warning is issued.
 }
 \description{
 \code{genDensityTree} - Generates a rooted binary tree in \code{phylo}
@@ -39,6 +40,15 @@ lineages until an equilibrium number is reached at which speciation and
 extinction rates are equal).
 Extinct species are removed from the tree, i.e., the generated tree contains
 only species living at the present.
+}
+\details{
+Each attempt runs for at most \code{TIMEperTRY} seconds. An attempt fails
+if the process goes extinct (all living lineages die out) or if the time
+limit is reached before \code{n} leaves have been produced. Failure is
+particularly likely when \code{EQUILIB < n}, because the density-dependent
+extinction rate then exceeds the birth rate from the very start; a warning
+is issued in this case. Increasing \code{TRIES} or \code{TIMEperTRY} can
+help, but choosing \code{EQUILIB >= n} is the more reliable fix.
 }
 \examples{
 genDensityTree(n = 5, EQUILIB = 6)

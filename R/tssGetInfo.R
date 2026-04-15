@@ -1,3 +1,7 @@
+# Internal helper: extract a single named field from tssInfo for a vector of shorts.
+.getTSSfield <- function(tss_shorts, field) {
+  sapply(tss_shorts, function(x) tssInfo[[x]][[field]], USE.NAMES = FALSE)
+}
 #' Get information on included tree shape statistics
 #'
 #' \code{getTSSnames} - Returns the full names (character/expression) of the
@@ -13,17 +17,16 @@
 #'
 #' @examples
 #' getTSSnames(tss_shorts = c("Sackin", "Colless", "B1I"))
-getTSSnames <- function(tss_shorts){
-  namesTSS <- rep(NA, length(tss_shorts))
-  for(i in 1:length(tss_shorts)){
-    namesTSS[i] <- tssInfo[[tss_shorts[i]]]$name
-  }
-  return(namesTSS)
+getTSSnames <- function(tss_shorts) {
+  .getTSSfield(tss_shorts, "name")
 }
 #' Get information on included tree shape statistics
 #'
 #' \code{getTSSsimple} - Returns the simple names (character/expression) of the
 #' TSS.
+#'
+#' @param tss_shorts Vector of short names (characters) of TSS contained in
+#' \code{tssInfo}.
 #'
 #' @return \code{getTSSsimple} Vector of characters/expressions.
 #'
@@ -32,16 +35,15 @@ getTSSnames <- function(tss_shorts){
 #'
 #' @examples
 #' getTSSsimple(tss_shorts = c("Sackin", "Colless", "B1I"))
-getTSSsimple <- function(tss_shorts){
-  namesTSS <- rep(NA, length(tss_shorts))
-  for(i in 1:length(tss_shorts)){
-    namesTSS[i] <- tssInfo[[tss_shorts[i]]]$simple
-  }
-  return(namesTSS)
+getTSSsimple <- function(tss_shorts) {
+  .getTSSfield(tss_shorts, "simple")
 }
 #' Get information on included tree shape statistics
 #'
 #' \code{getTSScolors} - Returns the colors of the TSS.
+#'
+#' @param tss_shorts Vector of short names (characters) of TSS contained in
+#' \code{tssInfo}.
 #'
 #' @return \code{getTSScolors} Vector of characters (color names).
 #'
@@ -50,16 +52,15 @@ getTSSsimple <- function(tss_shorts){
 #'
 #' @examples
 #' getTSScolors(tss_shorts = c("Sackin", "Colless", "B1I"))
-getTSScolors <- function(tss_shorts){
-  colorsTSS <- rep(NA, length(tss_shorts))
-  for(i in 1:length(tss_shorts)){
-    colorsTSS[i] <- tssInfo[[tss_shorts[i]]]$col
-  }
-  return(colorsTSS)
+getTSScolors <- function(tss_shorts) {
+  .getTSSfield(tss_shorts, "col")
 }
 #' Get information on included tree shape statistics
 #'
 #' \code{getTSSsafe_n} - Returns the ranges of n that can be safely used.
+#'
+#' @param tss_shorts Vector of short names (characters) of TSS contained in
+#' \code{tssInfo}.
 #'
 #' @return \code{getTSSsafe_n} Numeric matrix, one row per TSS and two columns
 #' with lower and upper limit.
@@ -69,38 +70,37 @@ getTSScolors <- function(tss_shorts){
 #'
 #' @examples
 #' getTSSsafe_n(tss_shorts = c("Sackin", "Colless", "B1I"))
-getTSSsafe_n <- function(tss_shorts){
-  safe_nTSS <- matrix(NA, nrow = length(tss_shorts), ncol = 2,
-                     dimnames = list(tss_shorts, NULL))
-  for(i in 1:length(tss_shorts)){
-    safe_nTSS[i,] <- tssInfo[[tss_shorts[i]]]$safe_n
-  }
-  return(safe_nTSS)
+getTSSsafe_n <- function(tss_shorts) {
+  matrix(t(sapply(tss_shorts, function(x) tssInfo[[x]]$safe_n)),
+    ncol = 2, dimnames = list(tss_shorts, NULL)
+  )
 }
 #' Get information on included tree shape statistics
 #'
 #' \code{getTSStype} - Returns the types of the TSS, i.e., whether they are
 #' balance or imbalance indices, or simple tree shape statistics.
 #'
-#' @return \code{getTSStype} Vector of characters (types as factors).
+#' @param tss_shorts Vector of short names (characters) of TSS contained in
+#' \code{tssInfo}.
+#'
+#' @return \code{getTSStype} Factor vector with levels
+#' \code{c("tss", "bali", "imbali")}.
 #'
 #' @export
 #' @rdname tssGetInfo
 #'
 #' @examples
 #' getTSStype(tss_shorts = c("Sackin", "Colless", "B1I"))
-getTSStype <- function(tss_shorts){
-  typeTSS <- rep(NA, length(tss_shorts))
-  for(i in 1:length(tss_shorts)){
-    typeTSS[i] <- tssInfo[[tss_shorts[i]]]$type
-  }
-  typeTSS <- factor(typeTSS, levels = c("tss", "bali", "imbali"))
-  return(typeTSS)
+getTSStype <- function(tss_shorts) {
+  factor(.getTSSfield(tss_shorts, "type"), levels = c("tss", "bali", "imbali"))
 }
 #' Get information on included tree shape statistics
 #'
 #' \code{getTSSonly_bin} - Returns TRUE/FALSE vector: TRUE if TSS is only for
 #' binary trees and FALSE otherwise.
+#'
+#' @param tss_shorts Vector of short names (characters) of TSS contained in
+#' \code{tssInfo}.
 #'
 #' @return \code{getTSSonly_bin} Logical vector.
 #'
@@ -109,12 +109,8 @@ getTSStype <- function(tss_shorts){
 #'
 #' @examples
 #' getTSSonly_bin(tss_shorts = c("Sackin", "Colless", "B1I"))
-getTSSonly_bin <- function(tss_shorts){
-  only_binTSS <- rep(NA, length(tss_shorts))
-  for(i in 1:length(tss_shorts)){
-    only_binTSS[i] <- tssInfo[[tss_shorts[i]]]$only_binary
-  }
-  return(only_binTSS)
+getTSSonly_bin <- function(tss_shorts) {
+  .getTSSfield(tss_shorts, "only_binary")
 }
 #' Get information on included tree shape statistics
 #'
@@ -124,7 +120,10 @@ getTSSonly_bin <- function(tss_shorts){
 #'
 #' @param n Integer value or vector of integer values, that
 #' specifies the number(s) of leaves.
-#' If NULL (default), then \code{getAllSafeTSS} returns the short names of all
+#' If a vector is provided, only TSS that are safe for \emph{all} values in the
+#' vector are returned (i.e., the intersection of safe TSS across all specified
+#' leaf counts).
+#' If NULL (default), then \code{getAllTSS} returns the short names of all
 #' TSS contained in \code{tssInfo}.
 #' @param not_only_bin Select TRUE if you also want to analyze non-binary trees
 #' and therefore want to filter out any TSS that only work on binary trees.
@@ -141,29 +140,29 @@ getTSSonly_bin <- function(tss_shorts){
 #' @rdname tssGetInfo
 #'
 #' @examples
-#' getAllTSS(n = c(3,30))
+#' getAllTSS(n = c(3, 30))
 getAllTSS <- function(n = NULL, not_only_bin = FALSE,
-                      types = c("tss", "bali", "imbali")){
+                      types = c("tss", "bali", "imbali")) {
   select_TSS <- NULL
-  for(i in 1:length(tssInfo)){
+  for (i in seq_along(tssInfo)) {
     is_permissible <- TRUE
     # Check range of n.
-    if(!is.null(n) &&
-       (sum(n<tssInfo[[i]]$safe_n[1] |
-           n>tssInfo[[i]]$safe_n[2] )>0)){
+    if (!is.null(n) &&
+      (sum(n < tssInfo[[i]]$safe_n[1] |
+        n > tssInfo[[i]]$safe_n[2]) > 0)) {
       is_permissible <- FALSE
     }
     # Check if applicable to (non-)binary trees
-    if(not_only_bin &&
-       tssInfo[[i]]$only_binary){
+    if (not_only_bin &&
+      tssInfo[[i]]$only_binary) {
       is_permissible <- FALSE
     }
     # Check if type OK.
-    if(!tssInfo[[i]]$type %in% types){
+    if (!tssInfo[[i]]$type %in% types) {
       is_permissible <- FALSE
     }
     # Add if permissible.
-    if(is_permissible){
+    if (is_permissible) {
       select_TSS <- c(select_TSS, tssInfo[[i]]$short)
     }
   }

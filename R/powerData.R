@@ -47,6 +47,9 @@
 #' getTSSdata(tss = c("Colless", "my_avd"), n = 5L, Ntrees = 3L,
 #'            tm = "my_aldous")
 getTSSdata <- function(tss, n, Ntrees = 1L, tm) {
+  if (!is.numeric(Ntrees) || Ntrees < 1 || Ntrees%%1 != 0) {
+    stop("Ntrees must be a positive integer")
+  }
   # Create the list of trees under the model
   treeList <- NULL
   # If the model is included in this package.
@@ -66,9 +69,10 @@ getTSSdata <- function(tss, n, Ntrees = 1L, tm) {
     )
   } else if (is.character(tm)) {
     # Else, if the model information is provided by the user.
-    if(exists(tm)[[1]]){
-      if(!is.null(get(tm)$func)) {
-        treeList <- get(tm)$func(n=n, Ntrees = Ntrees)
+    if(exists(tm)){
+      tm_obj <- get(tm)
+      if(!is.null(tm_obj$func)) {
+        treeList <- tm_obj$func(n=n, Ntrees = Ntrees)
       } else {
         stop(paste0("No function provided for tree model ",
                     paste(unlist(tm), collapse = ", ")))
@@ -110,24 +114,25 @@ getTSSdata_trees <- function(tss, treeList) {
   # Initialize matrix for the TSS values.
   tss_data <- matrix(NA, nrow = length(tss), ncol = length(treeList),
                      dimnames = list(tss, NULL))
-  for(i in 1:length(tss)){
+  for(i in seq_along(tss)){
     # Compute the TSS for all trees.
     if(!is.null(tssInfo[[tss[i]]])){
       # The TSS is already contained in tssInfo.
-      tss_data[i,] <- sapply(1:length(treeList),
+      tss_data[i,] <- sapply(seq_along(treeList),
                              function(x){tssInfo[[tss[i]]]$func(treeList[[x]])})
 
     } else if(exists(tss[i])) {
       # The TSS is provided by the user.
-      if(!is.null(get(tss[i])$func)) {
-        tss_data[i,] <- sapply(1:length(treeList),
-                               function(x){get(tss[i])$func(treeList[[x]])})
+      tss_obj <- get(tss[i])
+      if(!is.null(tss_obj$func)) {
+        tss_data[i,] <- sapply(seq_along(treeList),
+                               function(x){tss_obj$func(treeList[[x]])})
       } else {
-        stop(paste0("No function provided for TSS ",tss[i],"."))
+        stop(paste0("No function provided for TSS ", tss[i]))
       }
-      if(!is.null(get(tss[i])$short)) {
+      if(!is.null(tss_obj$short)) {
         # If a short name is provided use it.
-        dimnames(tss_data)[[1]][i] <- get(tss[i])$short
+        dimnames(tss_data)[[1]][i] <- tss_obj$short
       }
     } else {
       stop(paste("Unknown TSS:",tss[i]))

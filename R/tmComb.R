@@ -25,12 +25,9 @@
 genCombTree <- function(n){
   if(n < 2 || n%%1!=0){
     stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+               "an integer"))
   }
-  caterpillar_n <- "( , )"
-  for(i in 3:n){
-    caterpillar_n <- paste0("(",caterpillar_n,", )")
-  }
-  caterpillar_n <- paste0(caterpillar_n,";")
+  caterpillar_n <- paste0(strrep("(", n - 2L), "( , )",
+                          strrep(", )", n - 2L), ";")
   return(phytools::read.newick(text = caterpillar_n))
 }

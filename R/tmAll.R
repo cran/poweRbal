@@ -1,3 +1,21 @@
+# Internal helper: generate Ntrees trees using gen_func() and return the
+# appropriate class. NULL results (from stochastic models that may fail) are
+# silently dropped and a message reports the shortfall.
+.wrap_trees <- function(Ntrees, gen_func) {
+  if (Ntrees == 1L) {
+    return(gen_func())
+  }
+  phylos <- lapply(seq_len(Ntrees), function(x) gen_func())
+  nulls <- which(sapply(phylos, is.null))
+  if (length(nulls) > 0) {
+    phylos <- phylos[-nulls]
+    message(paste0(
+      "Only ", length(phylos), " trees generated instead of ",
+      Ntrees, ".\n"
+    ))
+  }
+  structure(phylos, class = "multiPhylo")
+}
 #' Generation of rooted binary trees under a given tree model
 #'
 #' \code{genTrees} - Is a wrapper function that generates
@@ -133,170 +151,84 @@
 #' @examples
 #' genTrees(n = 5, Ntrees = 2, tm = list("aldous", 1))
 #' genTrees(n = 5, tm = "pda")
-genTrees <- function(n, Ntrees = 1L, tm){
-  if(n < 2 || n%%1!=0){
-    stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+genTrees <- function(n, Ntrees = 1L, tm) {
+  if (n < 2 || n %% 1 != 0) {
+    stop(paste(
+      "A tree must have at least 2 leaves, i.e., n>=2 and n must be",
+      "an integer"
+    ))
   }
-  if(Ntrees<0){
-    stop(paste("The desired number of trees Ntrees must be >0."))
+  if (Ntrees < 1 || Ntrees %% 1 != 0) {
+    stop("Ntrees must be a positive integer")
   }
-  Ntrees <- round(Ntrees)
 
   # Generate trees under specified tree model.
-  if(tm[[1]]=="yule"){ # -------------------------------------------- Yule model
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees, function(x){genYuleTree(n = n)})
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genYuleTree(n = n))
-    }
-  } else if(tm[[1]]=="pda"){ # -------------------------------------- PDA model
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees,function(x){genPDATree(n = n)})
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genPDATree(n = n))
-    }
-  } else if(tm[[1]]=="etm"){ # -------------------------------------- ETM model
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees,function(x){genETMTree(n = n)})
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genETMTree(n = n))
-    }
-  } else if(tm[[1]]=="aldous"){ # -------------------------------- Aldous model
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees,function(x){
-        genAldousBetaTree(n = n, BETA = tm[[2]])})
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genAldousBetaTree(n = n, BETA = tm[[2]]))
-    }
-  } else if(tm[[1]]=="ford"){ # -------------------------------- Aldous model
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees,function(x){
-        genFordsAlphaTree(n = n, ALPHA = tm[[2]])})
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genFordsAlphaTree(n = n, ALPHA = tm[[2]]))
-    }
-  } else if (tm[[1]] %in% c("DCO_sym", "DCO_asym", "IF_sym", "IF_asym",
-                            "IF-diff", "biased", "ASB")) { # ------ Zeta models
-    if(length(tm) < 3) {
-      tm <- list(tm[[1]], tm[[2]], 1)
-    }
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees,function(x){
-        genGrowTree(n = n, ZETA = tm[[2]],  STARTING_RATE = tm[[3]],
-                    use_built_in = tm[[1]])})
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genGrowTree(n = n, ZETA = tm[[2]],  STARTING_RATE = tm[[3]],
-                         use_built_in = tm[[1]]))
-    }
+  if (tm[[1]] == "yule") { # -------------------------------------------- Yule model
+    return(.wrap_trees(Ntrees, function() genYuleTree(n = n)))
+  } else if (tm[[1]] == "pda") { # -------------------------------------- PDA model
+    return(.wrap_trees(Ntrees, function() genPDATree(n = n)))
+  } else if (tm[[1]] == "etm") { # -------------------------------------- ETM model
+    return(.wrap_trees(Ntrees, function() genETMTree(n = n)))
+  } else if (tm[[1]] == "aldous") { # -------------------------------- Aldous model
+    return(.wrap_trees(Ntrees, function() genAldousBetaTree(n = n, BETA = tm[[2]])))
+  } else if (tm[[1]] == "ford") { # ---------------------------------- Ford model
+    return(.wrap_trees(Ntrees, function() genFordsAlphaTree(n = n, ALPHA = tm[[2]])))
+  } else if (tm[[1]] %in% c(
+    "DCO_sym", "DCO_asym", "IF_sym", "IF_asym",
+    "IF-diff", "biased", "ASB"
+  )) { # ------ Zeta models
+    if (length(tm) < 3) tm <- list(tm[[1]], tm[[2]], 1)
+    return(.wrap_trees(Ntrees, function() {
+      genGrowTree(
+        n = n, ZETA = tm[[2]], STARTING_RATE = tm[[3]],
+        use_built_in = tm[[1]]
+      )
+    }))
   } else if (tm[[1]] %in% c("simpleBrown_sym", "simpleBrown_asym")) { # SimBrown
-    if(length(tm) < 3) {
-      tm <- list(tm[[1]], tm[[2]], 1)
-    }
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees,function(x){
-        genGrowTree(n = n, SIGMA = tm[[2]],  STARTING_RATE = tm[[3]],
-                    use_built_in = tm[[1]])})
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genGrowTree(n = n, SIGMA = tm[[2]],  STARTING_RATE = tm[[3]],
-                         use_built_in = tm[[1]]))
-    }
-  } else if (tm[[1]] %in% c("lin-Brown_sym", "lin-Brown_asym",
-                            "lin-Brown-bounded_sym", "lin-Brown-bounded_asym",
-                            "log-Brown_sym", "log-Brown_asym")) { # -- Brownians
-    if(length(tm) < 3) {
-      tm <- list(tm[[1]], tm[[2]], 1, 10)
-    }
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees,function(x){
-        genGrowTree(n = n, SIGMA = tm[[2]],  STARTING_RATE = tm[[3]],
-                    STARTING_TRAIT = tm[[4]],
-                    use_built_in = tm[[1]])})
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genGrowTree(n = n, SIGMA = tm[[2]],  STARTING_RATE = tm[[3]],
-                         STARTING_TRAIT = tm[[4]],
-                         use_built_in = tm[[1]]))
-    }
+    if (length(tm) < 3) tm <- list(tm[[1]], tm[[2]], 1)
+    return(.wrap_trees(Ntrees, function() {
+      genGrowTree(
+        n = n, SIGMA = tm[[2]], STARTING_RATE = tm[[3]],
+        use_built_in = tm[[1]]
+      )
+    }))
+  } else if (tm[[1]] %in% c(
+    "lin-Brown_sym", "lin-Brown_asym",
+    "lin-Brown-bounded_sym", "lin-Brown-bounded_asym",
+    "log-Brown_sym", "log-Brown_asym"
+  )) { # -- Brownians
+    if (length(tm) < 3) tm <- list(tm[[1]], tm[[2]], 1, 10)
+    return(.wrap_trees(Ntrees, function() {
+      genGrowTree(
+        n = n, SIGMA = tm[[2]], STARTING_RATE = tm[[3]],
+        STARTING_TRAIT = tm[[4]], use_built_in = tm[[1]]
+      )
+    }))
   } else if (tm[[1]] == "alt-birth-death") { # --- alternative birth-death model
-    if(length(tm) < 4) {
-      tm <- list(tm[[1]], tm[[2]], tm[[3]], 5)
-    }
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees, function(x){
-        genAltBirthDeathTree(n = n, BIRTHRATE = tm[[2]], DEATHRATE = tm[[3]],
-                             TRIES = tm[[4]])})
-      if(sum(sapply(phylos, is.null))>0){
-        phylos <- phylos[-which(sapply(phylos, is.null))]
-        message(paste0("Only ",length(phylos)," trees generated instead of ",
-                       Ntrees,".\n"))
-      }
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genAltBirthDeathTree(n = n, BIRTHRATE = tm[[2]],
-                                  DEATHRATE = tm[[3]],
-                                  TRIES = tm[[4]]))
-    }
+    if (length(tm) < 4) tm <- list(tm[[1]], tm[[2]], tm[[3]], 5)
+    return(.wrap_trees(Ntrees, function() {
+      genAltBirthDeathTree(
+        n = n, BIRTHRATE = tm[[2]], DEATHRATE = tm[[3]],
+        TRIES = tm[[4]]
+      )
+    }))
   } else if (tm[[1]] == "density") { # --------------------------------- density
-    if(length(tm) < 4) {
-      tm <- list(tm[[1]], tm[[2]], tm[[3]], 5, 0.01)
-    }
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees, function(x){
-        genDensityTree(n = n, BIRTHRATE = tm[[2]], EQUILIB = tm[[3]],
-                             TRIES = tm[[4]], TIMEperTRY = tm[[5]])})
-      if(sum(sapply(phylos, is.null))>0){
-        phylos <- phylos[-which(sapply(phylos, is.null))]
-        message(paste0("Only ",length(phylos)," trees generated instead of ",
-                      Ntrees,".\n"))
-      }
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genDensityTree(n = n, BIRTHRATE = tm[[2]],
-                                  EQUILIB = tm[[3]],
-                                  TRIES = tm[[4]], TIMEperTRY = tm[[5]]))
-    }
+    if (length(tm) < 4) tm <- list(tm[[1]], tm[[2]], tm[[3]], 5, 0.01)
+    return(.wrap_trees(Ntrees, function() {
+      genDensityTree(
+        n = n, BIRTHRATE = tm[[2]], EQUILIB = tm[[3]],
+        TRIES = tm[[4]], TIMEperTRY = tm[[5]]
+      )
+    }))
   } else if (tm[[1]] == "BiSSE") { # ------------------------------------- BiSSE
-    if(length(tm) < 5) {
-      tm <- list(tm[[1]], tm[[2]], tm[[3]], tm[[4]], 5, 0.01)
-    }
-    if(Ntrees>1){
-      phylos <- lapply(1:Ntrees, function(x){
-        genBiSSETree(n = n, BIRTHRATES = tm[[2]], DEATHRATES = tm[[3]],
-                             TRANSRATES = tm[[4]],
-                             TRIES = tm[[5]], TIMEperTRY = tm[[6]])})
-      if(sum(sapply(phylos, is.null))>0){
-        phylos <- phylos[-which(sapply(phylos, is.null))]
-        message(paste0("Only ",length(phylos)," trees generated instead of ",
-                       Ntrees,".\n"))
-      }
-      attr(phylos, "class") <- "multiPhylo"
-      return(phylos)
-    }else{
-      return(genBiSSETree(n = n, BIRTHRATES = tm[[2]],
-                                  DEATHRATES = tm[[3]],
-                                  TRANSRATES = tm[[4]],
-                                  TRIES = tm[[5]], TIMEperTRY = tm[[6]]))
-    }
+    if (length(tm) < 5) tm <- list(tm[[1]], tm[[2]], tm[[3]], tm[[4]], 5, 0.01)
+    return(.wrap_trees(Ntrees, function() {
+      genBiSSETree(
+        n = n, BIRTHRATES = tm[[2]], DEATHRATES = tm[[3]],
+        TRANSRATES = tm[[4]], TRIES = tm[[5]], TIMEperTRY = tm[[6]]
+      )
+    }))
   } else {
-    stop("Unknown tree model.")
+    stop("Unknown tree model")
   }
 }
-

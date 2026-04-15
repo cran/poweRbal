@@ -43,7 +43,10 @@
 genFordsAlphaTree <- function(n, ALPHA){
   if(n < 2 || n%%1!=0){
     stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+               "an integer"))
+  }
+  if(ALPHA < 0 || ALPHA > 1){
+    stop("ALPHA must be in [0, 1]")
   }
 
   # Create the edge matrix -----------------------------------------------------
@@ -60,9 +63,11 @@ genFordsAlphaTree <- function(n, ALPHA){
       # Choose edge for leaf insertion -----------------------------------------
       numb_edges <- 2*i -1
       curr_probs <- rep(NA, numb_edges)
-      curr_probs[is_leaf_edge[1:numb_edges]] <- (1-ALPHA)/(i-ALPHA)
-      curr_probs[!is_leaf_edge[1:numb_edges]] <- ALPHA/(i-ALPHA)
-      edge_index <- sample(1:numb_edges, size = 1, replace = F,
+      leaf_flags <- is_leaf_edge[1:numb_edges]
+      leaf_flags[is.na(leaf_flags)] <- FALSE
+      curr_probs[leaf_flags] <- (1-ALPHA)/(i-ALPHA)
+      curr_probs[!leaf_flags] <- ALPHA/(i-ALPHA)
+      edge_index <- sample(1:numb_edges, size = 1, replace = FALSE,
                            prob = curr_probs)
       # Numbers for incident and new nodes -------------------------------------
       edge_parent <- m[edge_index,1]
@@ -82,8 +87,8 @@ genFordsAlphaTree <- function(n, ALPHA){
   curr_root <- m[1,2]
   m <- m[-1,]
   # Create the phylo object and enumerate cladewise ----------------------------
-  phy <- list(edge = m, tip.label = paste("t", sample.int(n,n), sep = ""),
-              Nnode = as.integer(n-1))
-  attr(phy, "class") <- "phylo"
+  phy <- structure(list(edge = m, tip.label = paste("t", sample.int(n,n), sep = ""),
+                        Nnode = as.integer(n-1)),
+                   class = "phylo")
   return(enum2cladewise(phy, root = curr_root))
 }

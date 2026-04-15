@@ -19,9 +19,20 @@
 #' rate at which the extinction events occur.
 #' @param TRIES Integer value (default = 5) that specifies
 #' the number of attempts to generate a tree with \code{n} leaves.
+#' @param TIMEperTRY Numeric value (default = 0.01) that specifies the maximum
+#' amount of time (in seconds) invested per try.
 #'
 #' @return \code{genAltBirthDeathTree} A single tree of class \code{phylo} is
-#' returned.
+#' returned. If no tree with exactly \code{n} leaves could be generated within
+#' \code{TRIES} attempts, \code{NULL} is returned and a warning is issued.
+#'
+#' @details
+#' Each attempt runs for at most \code{TIMEperTRY} seconds. An attempt fails
+#' if the process goes extinct (all living lineages die out) or if the time
+#' limit is reached before \code{n} leaves have been produced. Failure is more
+#' likely when \code{DEATHRATE} is close to or exceeds \code{BIRTHRATE},
+#' leading to frequent extinctions. Increasing \code{TRIES} or
+#' \code{TIMEperTRY} can help in such cases.
 #'
 #' @references
 #'  - S. J. Kersting, K. Wicke, and M. Fischer. Tree balance in phylogenetic models.
@@ -34,51 +45,68 @@
 #' @examples
 #' genAltBirthDeathTree(n = 7, DEATHRATE = 1)
 genAltBirthDeathTree <- function(n, BIRTHRATE = 1, DEATHRATE = 0,
-                                 TRIES = 5){
-  if(n < 2 || n%%1!=0){
-    stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+                                 TRIES = 5, TIMEperTRY = 0.01) {
+  if (n < 2 || n %% 1 != 0) {
+    stop(paste(
+      "A tree must have at least 2 leaves, i.e., n>=2 and n must be",
+      "an integer"
+    ))
   }
-  if(BIRTHRATE<=0){
-    stop(paste("The speciation rate must be >0."))
+  if (BIRTHRATE <= 0) {
+    stop("The speciation rate must be >0")
   }
-  if(DEATHRATE<0){
-    stop(paste("The extinction rate must be >=0."))
+  if (DEATHRATE < 0) {
+    stop("The extinction rate must be >=0")
+  }
+  if (TRIES < 1 || TRIES %% 1 != 0) {
+    stop("TRIES must be a positive integer")
   }
   phy <- NULL
-  i <- 1
-  while(i<=TRIES && is.null(phy)){
-    i <- i+1
+  for (i in seq_len(TRIES)) {
+    starting_time <- Sys.time()
     # Create the edge matrix
-    m <- matrix(rep(NA,(2*n-2)*2), nrow = 2*n-2, ncol = 2)
+    m <- matrix(rep(NA, (2 * n - 2) * 2), nrow = 2 * n - 2, ncol = 2)
     # Initialize vector for current leaves and their rates
     curr_leaves <- 1 # Vector of the current leaves (start: only one node)
-    birth_rates <- c(BIRTHRATE, rep(NA, 2*n-2)) # Rates of all nodes
-    death_rates <- c(DEATHRATE, rep(NA, 2*n-2))
-    free_numbers <- c(FALSE,rep(TRUE, 2*n-2))
-    free_rows <- rep(TRUE, 2*n-2)
-    anc_edge <- c(0, rep(NA, 2*n-2)) # Which edge leads from parent to node?
-    desc_edges <- matrix(rep(NA,(2*n-1)*2), nrow = 2*n-1, ncol = 2)
+    birth_rates <- c(BIRTHRATE, rep(NA, 2 * n - 2)) # Rates of all nodes
+    death_rates <- c(DEATHRATE, rep(NA, 2 * n - 2))
+    free_numbers <- c(FALSE, rep(TRUE, 2 * n - 2))
+    free_rows <- rep(TRUE, 2 * n - 2)
+    anc_edge <- c(0, rep(NA, 2 * n - 2)) # Which edge leads from parent to node?
+    desc_edges <- matrix(rep(NA, (2 * n - 1) * 2), nrow = 2 * n - 1, ncol = 2)
     # Do speciation and extinction steps as long as necessary
-    while(length(curr_leaves) < n &&
-          sum(birth_rates[curr_leaves]>0)>=1){
+    while (length(curr_leaves) < n &&
+      sum(birth_rates[curr_leaves] > 0) >= 1 &&
+      Sys.time() - starting_time < TIMEperTRY) {
       # Determine event type and the affected leaf
-      is_speciation_event <- sample(c(TRUE, FALSE), size = 1, replace = F,
-                                    prob = c(sum(birth_rates[curr_leaves]),
-                                             sum(death_rates[curr_leaves])))
-      if(is_speciation_event){ # Speciation event
-        leaf_index <- sample(1:length(curr_leaves), size = 1, replace = F,
-                             prob = birth_rates[curr_leaves]) # Choose leaf
+      is_speciation_event <- sample(c(TRUE, FALSE),
+        size = 1, replace = FALSE,
+        prob = c(
+          sum(birth_rates[curr_leaves]),
+          sum(death_rates[curr_leaves])
+        )
+      )
+      if (is_speciation_event) { # Speciation event
+        leaf_index <- sample(1:length(curr_leaves),
+          size = 1, replace = FALSE,
+          prob = birth_rates[curr_leaves]
+        ) # Choose leaf
         # New numbers for children
-        child_num <- which(free_numbers)[c(1,2)]
+        if (length(which(free_numbers)) < 2) {
+          stop("Internal error: insufficient free entries in tree buffer")
+        }
+        child_num <- which(free_numbers)[c(1, 2)]
         free_numbers[child_num] <- FALSE
         # Fill out matrix row by row (edges: parent->child)
-        row_num <- which(free_rows)[c(1,2)]
+        if (length(which(free_rows)) < 2) {
+          stop("Internal error: insufficient free rows in tree buffer")
+        }
+        row_num <- which(free_rows)[c(1, 2)]
         free_rows[row_num] <- FALSE
-        m[row_num[1],] <- c(curr_leaves[leaf_index], child_num[1])
-        m[row_num[2],] <- c(curr_leaves[leaf_index], child_num[2])
+        m[row_num[1], ] <- c(curr_leaves[leaf_index], child_num[1])
+        m[row_num[2], ] <- c(curr_leaves[leaf_index], child_num[2])
         anc_edge[child_num] <- row_num
-        desc_edges[curr_leaves[leaf_index],] <- row_num
+        desc_edges[curr_leaves[leaf_index], ] <- row_num
         # Remove parent rate and insert children's rates.
         birth_rates[curr_leaves[leaf_index]] <- NA
         death_rates[curr_leaves[leaf_index]] <- NA
@@ -87,20 +115,32 @@ genAltBirthDeathTree <- function(n, BIRTHRATE = 1, DEATHRATE = 0,
         # Remove parent from current leaves and insert children.
         curr_leaves <- c(curr_leaves[-leaf_index], child_num[1], child_num[2])
       } else { # Extinction event
-        leaf_index <- sample(1:length(curr_leaves), size = 1, replace = F,
-                             prob = death_rates[curr_leaves]) # Choose leaf
+        leaf_index <- sample(1:length(curr_leaves),
+          size = 1, replace = FALSE,
+          prob = death_rates[curr_leaves]
+        ) # Choose leaf
         birth_rates[curr_leaves[leaf_index]] <- 0
         death_rates[curr_leaves[leaf_index]] <- 0
       }
     }
-    if(length(curr_leaves) == n){ # If successful
+    if (length(curr_leaves) == n) { # If successful
       # Create the phylo object and enumerate cladewise
-      phy <- list(edge = m, tip.label = paste("t", sample.int(n,n), sep = ""),
-                  Nnode = as.integer(n-1))
-      attr(phy, "class") <- "phylo"
+      phy <- structure(
+        list(
+          edge = m, tip.label = paste("t", sample.int(n, n), sep = ""),
+          Nnode = as.integer(n - 1)
+        ),
+        class = "phylo"
+      )
       phy <- enum2cladewise(phy, root = 1)
+      break
     }
+  }
+  if (is.null(phy)) {
+    warning(
+      "Not able to generate tree with given parameters after ",
+      TRIES, " attempt(s). Returning NULL."
+    )
   }
   return(phy)
 }
-

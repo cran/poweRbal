@@ -31,7 +31,7 @@
 genPDATree <- function(n){
   if(n < 2 || n%%1!=0){
     stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+               "an integer"))
   }
   phy <- ape::rtopology(n = n, rooted = TRUE,
                         tip.label = paste("t", sample.int(n,n), sep = ""))

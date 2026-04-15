@@ -30,7 +30,10 @@ getAllTSS(n = NULL, not_only_bin = FALSE, types = c("tss", "bali", "imbali"))
 
 \item{n}{Integer value or vector of integer values, that
 specifies the number(s) of leaves.
-If NULL (default), then \code{getAllSafeTSS} returns the short names of all
+If a vector is provided, only TSS that are safe for \emph{all} values in the
+vector are returned (i.e., the intersection of safe TSS across all specified
+leaf counts).
+If NULL (default), then \code{getAllTSS} returns the short names of all
 TSS contained in \code{tssInfo}.}
 
 \item{not_only_bin}{Select TRUE if you also want to analyze non-binary trees
@@ -52,7 +55,8 @@ default all types are permissible.}
 \code{getTSSsafe_n} Numeric matrix, one row per TSS and two columns
 with lower and upper limit.
 
-\code{getTSStype} Vector of characters (types as factors).
+\code{getTSStype} Factor vector with levels
+\code{c("tss", "bali", "imbali")}.
 
 \code{getTSSonly_bin} Logical vector.
 
@@ -87,5 +91,5 @@ getTSScolors(tss_shorts = c("Sackin", "Colless", "B1I"))
 getTSSsafe_n(tss_shorts = c("Sackin", "Colless", "B1I"))
 getTSStype(tss_shorts = c("Sackin", "Colless", "B1I"))
 getTSSonly_bin(tss_shorts = c("Sackin", "Colless", "B1I"))
-getAllTSS(n = c(3,30))
+getAllTSS(n = c(3, 30))
 }

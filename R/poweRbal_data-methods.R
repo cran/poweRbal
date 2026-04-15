@@ -1,3 +1,18 @@
+# Shared helper: print TSS, n, null model, and alternative models sections.
+.print_tss_n_models <- function(x, ...) {
+  cat("TSS:\n")
+  if(is.null(x$tss)) print(rownames(x$power), ...) else print(x$tss, ...)
+  cat("n:\n")
+  if(is.null(x$n)) print(NULL, ...) else print(x$n, ...)
+  cat("Null model:\n")
+  if(is.null(x$null_model)) print(NULL, ...)
+  else print(paste(unlist(x$null_model), collapse=", "), ...)
+  cat("Alternative models:\n")
+  if(is.null(x$alt_models)) print(colnames(x$power), ...)
+  else print(sapply(seq_along(x$alt_models), function(X) {
+    paste(unlist(x$alt_models[[X]]), collapse=", ")}), ...)
+}
+
 #' Print and summary method for poweRbal_data objects
 #'
 #' This function prints the contents of an object of class \code{poweRbal_data}.
@@ -44,31 +59,7 @@ print.poweRbal_data <- function(x, ...) {
   } else {
     cat("Object of class 'poweRbal_data' with the following components:\n")
     print(names(x), ...)
-    cat("TSS:\n")
-    if(is.null(x$tss)){
-      print(rownames(x$power), ...)
-    } else {
-      print(x$tss, ...)
-    }
-    cat("n:\n")
-    if(is.null(x$n)){
-      print(NULL, ...)
-    } else {
-      print(x$n, ...)
-    }
-    cat("Null model:\n")
-    if(is.null(x$null_model)){
-      print(NULL, ...)
-    } else {
-      print(toString(x$null_model), ...)
-    }
-    cat("Alternative models:\n")
-    if(is.null(x$null_model)){
-      print(colnames(x$power), ...)
-    } else {
-      print(sapply(1:length(x$alt_models), function(X) {
-        paste(unlist(x$alt_models[[X]]), collapse=", ")}), ...)
-    }
+    .print_tss_n_models(x, ...)
   }
 }
 
@@ -101,31 +92,8 @@ summary.poweRbal_data <- function(object, ...) {
     element_types <- sapply(object, class)
     print(toString(element_types),...)
 
-    cat("\nTSS:\n")
-    if(is.null(object$tss)){
-      print(rownames(object$power), ...)
-    } else {
-      print(object$tss, ...)
-    }
-    cat("n:\n")
-    if(is.null(object$n)){
-      print(NULL, ...)
-    } else {
-      print(object$n, ...)
-    }
-    cat("Null model:\n")
-    if(is.null(object$null_model)){
-      print(NULL, ...)
-    } else {
-      print(paste(unlist(object$null_model), collapse=", "), ...)
-    }
-    cat("Alternative models:\n")
-    if(is.null(object$alt_models)){
-      print(colnames(object$power), ...)
-    } else {
-      print(sapply(1:length(object$alt_models), function(X) {
-        paste(unlist(object$alt_models[[X]]), collapse=", ")}), ...)
-    }
+    cat("\n")
+    .print_tss_n_models(object, ...)
 
     cat("\nTest method: ")
     if(is.null(object$test_type)){
@@ -198,6 +166,11 @@ summary.poweRbal_data <- function(object, ...) {
 
   }
 }
+.my_cols <- c("royalblue1", "lightpink3", "lightblue4", "darkblue",
+              "deepskyblue4", "darkolivegreen", "mediumorchid", "brown",
+              "darkolivegreen2", "tan3", "firebrick1", "darkgoldenrod1",
+              "maroon4", "lemonchiffon3", "darkorange4", "chartreuse3",
+              "mediumturquoise", "gray23", "deeppink3", "lightgoldenrod" )
 #' Plot method for poweRbal_data objects
 #'
 #' This function generates a plot for an object of class \code{poweRbal_data}.
@@ -282,7 +255,13 @@ plot.poweRbal_data <- function(x, tss_names = NULL, tss_colors = NULL,
                                alt_model_params = NULL, tss_ltys = NULL,
                                alt_model_family = NULL, ...) {
   if(is.null(x$power)){
-    stop("Power matrix not found.")
+    stop("Power matrix not found")
+  }
+  if(!is.null(tss_names) && length(tss_names) != nrow(x$power)){
+    stop("Length of tss_names must match the number of TSS")
+  }
+  if(!is.null(alt_model_params) && length(alt_model_params) != ncol(x$power)){
+    stop("Length of alt_model_params must match the number of alternative models")
   }
   if(is.null(tss_names)){
     if(!is.null(x$tss)){
@@ -295,8 +274,8 @@ plot.poweRbal_data <- function(x, tss_names = NULL, tss_colors = NULL,
     if(nrow(x$power) <= length(.my_cols)){
       tss_colors <- .my_cols[1:nrow(x$power)]
     } else {
-      tss_colors <- c(.my_cols, grDevices::rainbow(nrow(x$power)-
-                                                     length(.my_cols)))
+      tss_colors <- c(.my_cols, scales::hue_pal()(nrow(x$power) -
+                                                   length(.my_cols)))
     }
   }
   if(is.null(alt_model_params) && is.null(x$alt_model_params)){
@@ -312,7 +291,6 @@ plot.poweRbal_data <- function(x, tss_names = NULL, tss_colors = NULL,
     barCenters <- graphics::barplot(height = x$power, beside = TRUE,
                                     col = tss_colors,
                                     names.arg = alt_model_names,...)
-    barCenters
     if(!is.null(x$CIradius)){
       graphics::segments(barCenters, x$power - x$CIradius,
                          barCenters, x$power + x$CIradius, ...)
@@ -374,8 +352,3 @@ plot.poweRbal_data <- function(x, tss_names = NULL, tss_colors = NULL,
     }
   }
 }
-.my_cols <- c("royalblue1", "lightpink3", "lightblue4", "darkblue",
-              "deepskyblue4", "darkolivegreen", "mediumorchid", "brown",
-              "darkolivegreen2", "tan3", "firebrick1", "darkgoldenrod1",
-              "maroon4", "lemonchiffon3", "darkorange4", "chartreuse3",
-              "mediumturquoise", "gray23", "deeppink3", "lightgoldenrod" )

@@ -25,7 +25,7 @@
 genGFBTree <- function(n){
   if(n < 2 || n%%1!=0){
     stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+               "an integer"))
   }
   maxbal_n <- paste0(.auxGFB_n(n),";")
   return(phytools::read.newick(text=maxbal_n))

@@ -4,7 +4,13 @@
 \alias{genAltBirthDeathTree}
 \title{Generation of rooted binary trees under the alternative birth-death model}
 \usage{
-genAltBirthDeathTree(n, BIRTHRATE = 1, DEATHRATE = 0, TRIES = 5)
+genAltBirthDeathTree(
+  n,
+  BIRTHRATE = 1,
+  DEATHRATE = 0,
+  TRIES = 5,
+  TIMEperTRY = 0.01
+)
 }
 \arguments{
 \item{n}{Integer value that specifies the desired number of leaves, i.e.,
@@ -21,10 +27,14 @@ rate at which the extinction events occur.}
 
 \item{TRIES}{Integer value (default = 5) that specifies
 the number of attempts to generate a tree with \code{n} leaves.}
+
+\item{TIMEperTRY}{Numeric value (default = 0.01) that specifies the maximum
+amount of time (in seconds) invested per try.}
 }
 \value{
 \code{genAltBirthDeathTree} A single tree of class \code{phylo} is
-returned.
+returned. If no tree with exactly \code{n} leaves could be generated within
+\code{TRIES} attempts, \code{NULL} is returned and a warning is issued.
 }
 \description{
 \code{genAltBirthDeathTree} - Generates a rooted binary tree in \code{phylo}
@@ -34,6 +44,14 @@ In the alternative birth-death process all species have the same speciation
 \code{BIRTHRATE} and extinction rates \code{DEATHRATE}. Extinct species
 remain as fossils inside the tree with zero speciation and extinction
 rates.
+}
+\details{
+Each attempt runs for at most \code{TIMEperTRY} seconds. An attempt fails
+if the process goes extinct (all living lineages die out) or if the time
+limit is reached before \code{n} leaves have been produced. Failure is more
+likely when \code{DEATHRATE} is close to or exceeds \code{BIRTHRATE},
+leading to frequent extinctions. Increasing \code{TRIES} or
+\code{TIMEperTRY} can help in such cases.
 }
 \examples{
 genAltBirthDeathTree(n = 7, DEATHRATE = 1)

@@ -1,3 +1,31 @@
+.validate_power_params <- function(tss, null_model, alt_models, n,
+                                   distribs, N_null, N_alt,
+                                   test_type, correction, sig_lvl) {
+  if (anyNA(tss) || is.null(null_model) || length(alt_models) == 0) {
+    stop(paste(
+      "Comparison impossible with given tss, null_model and",
+      "alt_models"
+    ))
+  }
+  if (!is.numeric(n) || n < 2 || n %% 1 != 0) {
+    stop("n must be an integer >= 2")
+  }
+  if (!distribs %in% c("exact_if_possible", "sampled")) {
+    stop("Unknown distribs method")
+  }
+  if (N_null < 10 || N_null %% 1 != 0 || N_alt < 10 || N_alt %% 1 != 0) {
+    stop("The sample sizes must be an integer >=10")
+  }
+  if (!test_type %in% c("two-tailed", "two-tailed-unbiased")) {
+    stop("Unknown test type")
+  }
+  if (!correction %in% c("small-sample", "none")) {
+    stop("Unknown test correction method")
+  }
+  if (sig_lvl >= 1 || sig_lvl <= 0) {
+    stop("The level of significance must be >0 and <1")
+  }
+}
 #' Comparison of the power of TSS under different models
 #'
 #' \code{powerComp} - Compare the power of a set of TSS to identify trees
@@ -98,46 +126,37 @@
 #' @rdname powerCompare
 #'
 #' @examples
-#' powerComp(tss = c("Sackin", "Colless", "B1I"),
-#'           alt_models = list(list("aldous",-1), "pda", "etm"), n = 10L,
-#'           distribs = "sampled", N_null = 40L, N_alt = 20L)
+#' powerComp(
+#'   tss = c("Sackin", "Colless", "B1I"),
+#'   alt_models = list(list("aldous", -1), "pda", "etm"), n = 10L,
+#'   distribs = "sampled", N_null = 40L, N_alt = 20L
+#' )
 powerComp <- function(tss,
                       null_model = "yule",
                       alt_models, n,
                       distribs = "exact_if_possible",
                       N_null = 10000L, N_alt = 1000L,
                       test_type = "two-tailed", correction = "small-sample",
-                      sig_lvl = 0.05){
-  if(sum(is.na(c(tss,null_model,alt_models)))>0){
-    stop(paste("Comparison impossible with given tss, null_model and",
-               "alt_models."))
-  }
-  if(!distribs %in% c("exact_if_possible", "sampled")){
-    stop(paste("Unknown distribs method."))
-  }
-  if(N_null < 10 || N_null %%1!=0 || N_alt < 10 || N_alt %%1!=0){
-    stop(paste("The sample sizes must be an integer >=10."))
-  }
-  if(!test_type %in% c("two-tailed", "two-tailed-unbiased")){
-    stop(paste("Unknown test type."))
-  }
-  if(!correction %in% c("small-sample", "none")){
-    stop(paste("Unknown test correction method."))
-  }
-  if(sig_lvl >= 1 || sig_lvl <= 0){
-    stop(paste("The level of significance must be >0 and <1."))
-  }
+                      sig_lvl = 0.05) {
+  .validate_power_params(
+    tss, null_model, alt_models, n,
+    distribs, N_null, N_alt, test_type, correction, sig_lvl
+  )
   # Compute quantiles for null_model. ------------------------------------------
-  acc_regions <- getAccRegion(tss = tss, null_model = null_model, n = n,
-                              distribs = distribs, N_null = N_null,
-                              N_alt = N_alt,
-                              test_type = test_type, correction = correction,
-                              sig_lvl = sig_lvl)
-  return(powerComp_RegAcc(tss = tss, accept_regions = acc_regions,
-              null_model = null_model, alt_models = alt_models, n = n,
-              distribs = distribs, N_null = N_null, N_alt = N_alt,
-              test_type = test_type, correction = correction,
-              sig_lvl = sig_lvl))
+  acc_regions <- getAccRegion(
+    tss = tss, null_model = null_model, n = n,
+    distribs = distribs, N_null = N_null,
+    N_alt = N_alt,
+    test_type = test_type, correction = correction,
+    sig_lvl = sig_lvl
+  )
+  return(powerComp_RegAcc(
+    tss = tss, accept_regions = acc_regions,
+    null_model = null_model, alt_models = alt_models, n = n,
+    distribs = distribs, N_null = N_null, N_alt = N_alt,
+    test_type = test_type, correction = correction,
+    sig_lvl = sig_lvl
+  ))
 }
 #' Comparison of the power of TSS under different models
 #'
@@ -160,70 +179,76 @@ powerComp <- function(tss,
 #' @rdname powerCompare
 #'
 #' @examples
-#' powerComp_RegAcc(tss = c("Sackin", "Colless", "B1I"),
-#'           accept_regions = getAccRegion(tss = c("Sackin", "Colless", "B1I"),
-#'                                         n = 6L, null_model = "etm",
-#'                                         N_null = 20L, distribs = "sampled"),
-#'           null_model = "etm", distribs = "sampled",
-#'           alt_models = list(list("aldous",-1), "pda", "yule"), n = 6L,
-#'           N_null = 20L, N_alt = 20L)
+#' powerComp_RegAcc(
+#'   tss = c("Sackin", "Colless", "B1I"),
+#'   accept_regions = getAccRegion(
+#'     tss = c("Sackin", "Colless", "B1I"),
+#'     n = 6L, null_model = "etm",
+#'     N_null = 20L, distribs = "sampled"
+#'   ),
+#'   null_model = "etm", distribs = "sampled",
+#'   alt_models = list(list("aldous", -1), "pda", "yule"), n = 6L,
+#'   N_null = 20L, N_alt = 20L
+#' )
 powerComp_RegAcc <- function(tss, accept_regions, null_model, alt_models, n,
                              distribs = "exact_if_possible",
                              N_null = 10000L, N_alt = 1000L,
                              test_type = "two-tailed",
-                             correction = "small-sample", sig_lvl = 0.05){
-  if(sum(is.na(c(tss,null_model,alt_models)))>0){
-    stop(paste("Comparison impossible with given tss, null_model and",
-               "alt_models."))
-  }
-  if(!distribs %in% c("exact_if_possible", "sampled")){
-    stop(paste("Unknown distribs method."))
-  }
-  if(N_null < 10 || N_null %%1!=0 || N_alt < 10 || N_alt %%1!=0){
-    stop(paste("The sample sizes must be an integer >=10."))
-  }
-  if(!test_type %in% c("two-tailed", "two-tailed-unbiased")){
-    stop(paste("Unknown test type."))
-  }
-  if(!correction %in% c("small-sample", "none")){
-    stop(paste("Unknown test correction method."))
-  }
-  if(sig_lvl >= 1 || sig_lvl <= 0){
-    stop(paste("The level of significance must be >0 and <1."))
-  }
+                             correction = "small-sample", sig_lvl = 0.05) {
+  .validate_power_params(
+    tss, null_model, alt_models, n,
+    distribs, N_null, N_alt, test_type, correction, sig_lvl
+  )
   acc_regions <- accept_regions
   # Compute the power of the TSS -----------------------------------------------
-  powers <- matrix(NA, nrow = length(tss), ncol = length(alt_models),
-                   dimnames = list(tss, rep(NA,length(alt_models))))
+  powers <- matrix(NA,
+    nrow = length(tss), ncol = length(alt_models),
+    dimnames = list(tss, rep(NA, length(alt_models)))
+  )
 
-  radii <- matrix(NA, nrow = length(tss), ncol = length(alt_models),
-                  dimnames = list(tss, rep(NA,length(alt_models))))
+  radii <- matrix(NA,
+    nrow = length(tss), ncol = length(alt_models),
+    dimnames = list(tss, rep(NA, length(alt_models)))
+  )
 
   act_sample_sizes <- rep(NA, length(alt_models))
   # Do this for each alternative model and fill each column --------------------
-  for(i in 1:length(alt_models)){
-    alt_data <- getTSSdata(tss = tss, n = n, Ntrees = N_alt,
-                           tm = alt_models[[i]])
-    if(!is.null(alt_data)){
-      colnames(powers)[i] <- paste(unlist(alt_models[[i]]), collapse=", ")
-      powers[,i] <- getPowerMultTSS(accept_regions = acc_regions,
-                                    alt_data = alt_data)
+  for (i in seq_along(alt_models)) {
+    alt_data <- getTSSdata(
+      tss = tss, n = n, Ntrees = N_alt,
+      tm = alt_models[[i]]
+    )
+    if (!is.null(alt_data)) {
+      colnames(powers)[i] <- paste(unlist(alt_models[[i]]), collapse = ", ")
+      powers[, i] <- getPowerMultTSS(
+        accept_regions = acc_regions,
+        alt_data = alt_data
+      )
       act_sample_sizes[i] <- ncol(alt_data)
-      colnames(radii)[i] <- paste(unlist(alt_models[[i]]), collapse=", ")
-      how_many_rejected <- round(act_sample_sizes[i] * powers[,i])
-      radii[,i] <- 1.96/ sqrt(act_sample_sizes[i]) *
-        sqrt(how_many_rejected*(act_sample_sizes[i]-how_many_rejected)/
-               act_sample_sizes[i]/(act_sample_sizes[i]-1))
-
+      colnames(radii)[i] <- paste(unlist(alt_models[[i]]), collapse = ", ")
+      if (act_sample_sizes[i] < 2) {
+        radii[, i] <- NA
+        warning(
+          "Fewer than 2 trees generated for alternative model ", i,
+          " - confidence intervals cannot be computed."
+        )
+      } else {
+        how_many_rejected <- round(act_sample_sizes[i] * powers[, i])
+        radii[, i] <- 1.96 / sqrt(act_sample_sizes[i]) *
+          sqrt(how_many_rejected * (act_sample_sizes[i] - how_many_rejected) /
+            act_sample_sizes[i] / (act_sample_sizes[i] - 1))
+      }
     }
   }
   names(act_sample_sizes) <- dimnames(powers)[[2]]
-  result <- list(power = powers, accept_regions = acc_regions, CIradius = radii,
-                 actual_sample_sizes = act_sample_sizes, tss = tss,
-                 null_model = null_model, alt_models = alt_models, n = n,
-                 distribs = distribs, N_null = N_null, N_alt = N_alt,
-                 test_type = test_type, correction = correction,
-                 sig_lvl = sig_lvl)
+  result <- list(
+    power = powers, accept_regions = acc_regions, CIradius = radii,
+    actual_sample_sizes = act_sample_sizes, tss = tss,
+    null_model = null_model, alt_models = alt_models, n = n,
+    distribs = distribs, N_null = N_null, N_alt = N_alt,
+    test_type = test_type, correction = correction,
+    sig_lvl = sig_lvl
+  )
   class(result) <- "poweRbal_data"
   return(result)
 }

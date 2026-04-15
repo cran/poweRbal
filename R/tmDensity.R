@@ -25,7 +25,17 @@
 #' amount of time (in seconds) invested per try.
 #'
 #' @return \code{genDensityTree} A single tree of class \code{phylo} is
-#' returned.
+#' returned. If no tree with exactly \code{n} leaves could be generated within
+#' \code{TRIES} attempts, \code{NULL} is returned and a warning is issued.
+#'
+#' @details
+#' Each attempt runs for at most \code{TIMEperTRY} seconds. An attempt fails
+#' if the process goes extinct (all living lineages die out) or if the time
+#' limit is reached before \code{n} leaves have been produced. Failure is
+#' particularly likely when \code{EQUILIB < n}, because the density-dependent
+#' extinction rate then exceeds the birth rate from the very start; a warning
+#' is issued in this case. Increasing \code{TRIES} or \code{TIMEperTRY} can
+#' help, but choosing \code{EQUILIB >= n} is the more reliable fix.
 #'
 #' @references
 #'  - P. H. Harvey, R. M. May, and S. Nee. Phylogenies without fossils.
@@ -37,104 +47,132 @@
 #' @examples
 #' genDensityTree(n = 5, EQUILIB = 6)
 genDensityTree <- function(n, BIRTHRATE = 1, EQUILIB,
-                           TRIES = 5, TIMEperTRY = 0.01){
-  if(n < 2 || n%%1!=0){
-    stop(paste("A tree must have at least 2 leaves, i.e., n>=2 and n must be",
-               "an integer."))
+                           TRIES = 5, TIMEperTRY = 0.01) {
+  if (n < 2 || n %% 1 != 0) {
+    stop(paste(
+      "A tree must have at least 2 leaves, i.e., n>=2 and n must be",
+      "an integer"
+    ))
   }
-  if(EQUILIB < 1 || EQUILIB %%1!=0){
-    stop(paste("The equilibrium number must be an integer >0."))
+  if (EQUILIB < 1 || EQUILIB %% 1 != 0) {
+    stop("The equilibrium number must be an integer >0")
   }
-  if(BIRTHRATE<=0){
-    stop(paste("The speciation rate must be >0."))
+  if (BIRTHRATE <= 0) {
+    stop("The speciation rate must be >0")
+  }
+  if (TRIES < 1 || TRIES %% 1 != 0) {
+    stop("TRIES must be a positive integer")
+  }
+  if (EQUILIB < n) {
+    warning(paste(
+      "EQUILIB < n: the extinction rate will equal the birth rate",
+      "before n is reached. Tree generation may frequently fail."
+    ))
   }
   phy <- NULL
-  i <- 1
-  while(i<=TRIES && is.null(phy)){
+  for (i in seq_len(TRIES)) {
     starting_time <- Sys.time()
-    i <- i+1
     # Create the edge matrix ---------------------------------------------------
-    m <- matrix(rep(NA,(2*n-2)*2), nrow = 2*n-2, ncol = 2)
+    m <- matrix(rep(NA, (2 * n - 2) * 2), nrow = 2 * n - 2, ncol = 2)
     # Initialize vector for current leaves and their rates ---------------------
     curr_leaves <- 1 # Vector of the current leaves (start: only one node)
-    birth_rates <- rep(BIRTHRATE, 2*n-1) # Birth rates remain constant
-    free_numbers <- c(FALSE,rep(TRUE, 2*n-2))
-    free_rows <- rep(TRUE, 2*n-2)
-    anc_edge <- c(0, rep(NA, 2*n-2)) # Which edge leads from parent to node?
-    desc_edges <- matrix(rep(NA,(2*n-1)*2), nrow = 2*n-1, ncol = 2)
+    birth_rates <- rep(BIRTHRATE, 2 * n - 1) # Birth rates remain constant
+    free_numbers <- c(FALSE, rep(TRUE, 2 * n - 2))
+    free_rows <- rep(TRUE, 2 * n - 2)
+    anc_edge <- c(0, rep(NA, 2 * n - 2)) # Which edge leads from parent to node?
+    desc_edges <- matrix(rep(NA, (2 * n - 1) * 2), nrow = 2 * n - 1, ncol = 2)
     # Do speciation and extinction steps as long as necessary
-    while(length(curr_leaves) < n && length(curr_leaves)>0 &&
-          Sys.time()-starting_time < TIMEperTRY){
+    while (length(curr_leaves) < n && length(curr_leaves) > 0 &&
+      Sys.time() - starting_time < TIMEperTRY) {
       # Death rates are density dependent and have to be updated
-      if(length(curr_leaves) < EQUILIB){
-        death_rates <- rep(BIRTHRATE*(length(curr_leaves)/EQUILIB), 2*n-1)
+      if (length(curr_leaves) < EQUILIB) {
+        death_rates <- rep(BIRTHRATE * (length(curr_leaves) / EQUILIB), 2 * n - 1)
       } else {
-        death_rates <- rep(BIRTHRATE, 2*n-1)
+        death_rates <- rep(BIRTHRATE, 2 * n - 1)
       }
       # Determine event type and the affected leaf
-      is_speciation_event <- sample(c(TRUE, FALSE), size = 1, replace = F,
-                                    prob = c(sum(birth_rates[curr_leaves]),
-                                             sum(death_rates[curr_leaves])))
-      leaf_index <- sample.int(length(curr_leaves),1) # Choose leaf
-      if(is_speciation_event){ # Speciation event ------------------------------
+      is_speciation_event <- sample(c(TRUE, FALSE),
+        size = 1, replace = F,
+        prob = c(
+          sum(birth_rates[curr_leaves]),
+          sum(death_rates[curr_leaves])
+        )
+      )
+      leaf_index <- sample.int(length(curr_leaves), 1) # Choose leaf
+      if (is_speciation_event) { # Speciation event ------------------------------
         # New numbers for children
-        child_num <- which(free_numbers)[c(1,2)]
+        child_num <- which(free_numbers)[c(1, 2)]
         free_numbers[child_num] <- FALSE
         # Fill out matrix row by row (edges: parent->child)
-        row_num <- which(free_rows)[c(1,2)]
+        row_num <- which(free_rows)[c(1, 2)]
         free_rows[row_num] <- FALSE
-        m[row_num[1],] <- c(curr_leaves[leaf_index], child_num[1])
-        m[row_num[2],] <- c(curr_leaves[leaf_index], child_num[2])
+        m[row_num[1], ] <- c(curr_leaves[leaf_index], child_num[1])
+        m[row_num[2], ] <- c(curr_leaves[leaf_index], child_num[2])
         anc_edge[child_num] <- row_num
-        desc_edges[curr_leaves[leaf_index],] <- row_num
+        desc_edges[curr_leaves[leaf_index], ] <- row_num
         # Remove parent from current leaves and insert children.
         curr_leaves <- c(curr_leaves[-leaf_index], child_num[1], child_num[2])
       } else { # Extinction event  ---------------------------------------------
-        if(length(curr_leaves) == 1){
+        if (length(curr_leaves) == 1) {
           curr_leaves <- numeric(0)
         } else {
           # Numbers of parent and grandparent (with edges)
           node_leaf <- curr_leaves[leaf_index]
           edge_to_parent <- anc_edge[node_leaf]
-          node_parent <- m[edge_to_parent,1]
+          node_parent <- m[edge_to_parent, 1]
           edge_to_grandpar <- anc_edge[node_parent]
-          edge_to_sis <- desc_edges[node_parent,][which(!desc_edges[node_parent,]==edge_to_parent)]
-          node_sis <- m[edge_to_sis,2]
+          edge_to_sis <- desc_edges[node_parent, ][which(!desc_edges[node_parent, ] == edge_to_parent)]
+          node_sis <- m[edge_to_sis, 2]
           # Remove leaf, leaf edge, sister edge and parent
-          if(edge_to_grandpar == 0){ # If the parent is the root.
-            m[edge_to_sis, ] <- NA;    free_rows[edge_to_sis] <- TRUE
-            m[edge_to_parent, ] <- NA; free_rows[edge_to_parent] <- TRUE
+          if (edge_to_grandpar == 0) { # If the parent is the root.
+            m[edge_to_sis, ] <- NA
+            free_rows[edge_to_sis] <- TRUE
+            m[edge_to_parent, ] <- NA
+            free_rows[edge_to_parent] <- TRUE
             anc_edge[c(node_leaf, node_sis, node_parent)] <- c(NA, 0, NA)
             desc_edges[node_parent, ] <- NA
-            free_numbers[node_leaf] <- TRUE; free_numbers[node_parent] <- TRUE
+            free_numbers[node_leaf] <- TRUE
+            free_numbers[node_parent] <- TRUE
             # Remove parent from current leaves and insert children.
             curr_leaves <- curr_leaves[-leaf_index]
           } else {
             m[edge_to_grandpar, 2] <- node_sis
-            m[edge_to_sis, ] <- NA; free_rows[edge_to_sis] <- TRUE
-            m[edge_to_parent, ] <- NA; free_rows[edge_to_parent] <- TRUE
-            anc_edge[c(node_leaf, node_sis, node_parent)] <- c(NA,
-                                                               edge_to_grandpar,
-                                                               NA)
+            m[edge_to_sis, ] <- NA
+            free_rows[edge_to_sis] <- TRUE
+            m[edge_to_parent, ] <- NA
+            free_rows[edge_to_parent] <- TRUE
+            anc_edge[c(node_leaf, node_sis, node_parent)] <- c(
+              NA,
+              edge_to_grandpar,
+              NA
+            )
             desc_edges[node_parent, ] <- NA
-            free_numbers[node_leaf] <- TRUE; free_numbers[node_parent] <- TRUE
+            free_numbers[node_leaf] <- TRUE
+            free_numbers[node_parent] <- TRUE
             # Remove parent from current leaves and insert children.
             curr_leaves <- curr_leaves[-leaf_index]
           }
         }
       }
     }
-    if(length(curr_leaves) == n){ # If successful
+    if (length(curr_leaves) == n) { # If successful
       # Create the phylo object and enumerate cladewise
-      phy <- list(edge = m, tip.label = paste("t", sample.int(n,n), sep = ""),
-                  Nnode = as.integer(n-1))
-      attr(phy, "class") <- "phylo"
-      phy <- enum2cladewise(phy, root = which(anc_edge==0))
+      phy <- structure(
+        list(
+          edge = m, tip.label = paste("t", sample.int(n, n), sep = ""),
+          Nnode = as.integer(n - 1)
+        ),
+        class = "phylo"
+      )
+      phy <- enum2cladewise(phy, root = which(anc_edge == 0))
+      break
     }
   }
-  if(is.null(phy)){
-    comment("Not able to generate tree. Returning NULL instead.")
+  if (is.null(phy)) {
+    warning(
+      "Not able to generate tree with given parameters after ",
+      TRIES, " attempt(s). Returning NULL."
+    )
   }
   return(phy)
 }
-

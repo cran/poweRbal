@@ -42,14 +42,14 @@
 #'                                       Ntrees = 20L, tm = list("aldous", -1)))
 getPowerMultTSS <- function(accept_regions, alt_data){
   if(is.null(alt_data) || length(alt_data)<1){
-    stop("alt_data not usable (not available).")
+    stop("alt_data not usable (not available)")
   }
   if(is.null(dim(accept_regions))){
     accept_regions <- matrix(accept_regions, nrow = 1)
     alt_data <- matrix(alt_data, nrow = 1)
   }
   if(sum(accept_regions[,1] > accept_regions[,2])>0){
-    stop("accept_regions not usable (lower bound > upper bound).")
+    stop("accept_regions not usable (lower bound > upper bound)")
   }
   if(dim(accept_regions)[2]!=4){
     if(dim(accept_regions)[2]==2){
@@ -57,19 +57,14 @@ getPowerMultTSS <- function(accept_regions, alt_data){
                               rep(0,nrow(accept_regions)),
                               rep(0,nrow(accept_regions)))
     } else {
-      stop("accept_regions not usable (wrong number of columns).")
+      stop("accept_regions not usable (wrong number of columns)")
     }
   }
-  powers <- rep(NA, nrow(accept_regions))
+  powers <- (rowSums(alt_data < accept_regions[, 1] |
+                      alt_data > accept_regions[, 2]) +
+             rowSums(alt_data == accept_regions[, 1]) * accept_regions[, 3] +
+             rowSums(alt_data == accept_regions[, 2]) * accept_regions[, 4]) /
+            ncol(alt_data)
   names(powers) <- dimnames(accept_regions)[[1]]
-  for(tss in 1:nrow(accept_regions)){
-    powers[tss] <- sum(alt_data[tss,]<accept_regions[tss,1] |
-                         alt_data[tss,]>accept_regions[tss,2]) +
-                   sum(alt_data[tss,]==accept_regions[tss,1]) *
-                                  accept_regions[tss,3] +
-                   sum(alt_data[tss,]==accept_regions[tss,2]) *
-                                  accept_regions[tss,4]
-    powers[tss] <- powers[tss] / ncol(alt_data)
-  }
   return(powers)
 }
